@@ -43,3 +43,8 @@ next-env.d.ts
 # cursor
 .cursor
 .cursorrules
+
+# local recovery/temp artifacts
+node_modules.__broken_*/
+meemong-hair-consultation-web@*
+next
