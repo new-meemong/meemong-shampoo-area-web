@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/shared';
 import { useOverlayContext } from '@/shared/context/overlay-context';
@@ -13,7 +13,7 @@ import {
   DrawerTitle,
 } from '@/shared/ui/drawer';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
-import useUploadShampooRoomImageMutation from './use-upload-shampoo-room-image';
+import { useUploadShampooRoomImage } from './use-upload-shampoo-room-image';
 
 import { createShampooRoom, getShampooRoomDetail, updateShampooRoom } from '../api';
 import type { ShampooRoomCategory } from '@/entities/shampoo-room';
@@ -23,9 +23,14 @@ export type NewImageItem = {
   file: File;
 };
 
+type PreviewImage = {
+  key: string;
+  src: string;
+};
+
 const createImageId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
-export function useShampooRoomFormPage(postId?: string) {
+export function useShampooRoomForm(postId?: string) {
   const isEdit = !!postId;
   const { back, replace } = useRouterWithUser();
   const { showBottomSheet } = useOverlayContext();
@@ -42,6 +47,7 @@ export function useShampooRoomFormPage(postId?: string) {
   const [category, setCategory] = useState<ShampooRoomCategory>('FREE');
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<NewImageItem[]>([]);
+  const [previewImages, setPreviewImages] = useState<PreviewImage[]>([]);
 
   useEffect(() => {
     if (!detailData) return;
@@ -52,18 +58,29 @@ export function useShampooRoomFormPage(postId?: string) {
     setExistingImageUrls(detailData.images.map((image) => image.imageUrl));
   }, [detailData]);
 
-  const previewImages = useMemo(
-    () => [
-      ...existingImageUrls.map((url, index) => ({ key: `url-${index}`, src: url })),
-      ...newImageFiles.map((item) => ({
-        key: `file-${item.id}`,
-        src: URL.createObjectURL(item.file),
-      })),
-    ],
-    [existingImageUrls, newImageFiles],
-  );
+  const objectUrlsRef = useRef<string[]>([]);
 
-  const uploadMutation = useUploadShampooRoomImageMutation();
+  useEffect(() => {
+    const newObjectUrls: string[] = [];
+    const nextPreviewImages: PreviewImage[] = [
+      ...existingImageUrls.map((url, index) => ({ key: `url-${index}`, src: url })),
+      ...newImageFiles.map((item) => {
+        const objectUrl = URL.createObjectURL(item.file);
+        newObjectUrls.push(objectUrl);
+        return { key: `file-${item.id}`, src: objectUrl };
+      }),
+    ];
+
+    objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrlsRef.current = newObjectUrls;
+    setPreviewImages(nextPreviewImages);
+
+    return () => {
+      newObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [existingImageUrls, newImageFiles]);
+
+  const uploadMutation = useUploadShampooRoomImage();
   const createMutation = useMutation({ mutationFn: createShampooRoom });
   const updateMutation = useMutation({
     mutationFn: (payload: { id: string; data: Parameters<typeof updateShampooRoom>[1] }) =>

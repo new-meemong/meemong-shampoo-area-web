@@ -59,7 +59,7 @@ const uploadSingleImage = async (file: File): Promise<UploadedImage> => {
   };
 };
 
-export default function useUploadShampooRoomImageMutation() {
+export function useUploadShampooRoomImage() {
   return useMutation({
     mutationFn: async (files: File[]): Promise<ImageUploadResponse> => {
       const dataList = await Promise.all(files.map((file) => uploadSingleImage(file)));

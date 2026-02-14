@@ -1,6 +1,13 @@
 {
   "permissions": {
-    "allow": ["mcp__ide__getDiagnostics", "Bash(npm install:*)", "Bash(npx eslint:*)"],
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(npm install:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)"
+    ],
     "deny": [],
     "ask": []
   }

@@ -4,9 +4,9 @@ import GalleryIcon from '@/assets/icons/gallery.svg';
 import { XIcon } from 'lucide-react';
 
 import { Button } from '@/shared';
-import { SiteHeader } from '@/widgets/header';
+import { SiteHeader } from '@/shared/ui/site-header';
 
-import { useShampooRoomFormPage } from '../hooks/use-shampoo-room-form-page';
+import { useShampooRoomForm } from '../model/use-shampoo-room-form';
 import type { ShampooRoomCategory } from '@/entities/shampoo-room';
 
 const CATEGORY_OPTIONS: Array<{ label: string; value: ShampooRoomCategory }> = [
@@ -16,11 +16,11 @@ const CATEGORY_OPTIONS: Array<{ label: string; value: ShampooRoomCategory }> = [
   { label: '사고팔고', value: 'MARKET' },
 ];
 
-type ShampooRoomFormPageProps = {
+type ShampooRoomFormProps = {
   postId?: string;
 };
 
-export default function ShampooRoomFormPage({ postId }: ShampooRoomFormPageProps) {
+export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
   const {
     isEdit,
     back,
@@ -38,7 +38,7 @@ export default function ShampooRoomFormPage({ postId }: ShampooRoomFormPageProps
     handleFileChange,
     handleSubmit,
     handleImageRemove,
-  } = useShampooRoomFormPage(postId);
+  } = useShampooRoomForm(postId);
 
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">

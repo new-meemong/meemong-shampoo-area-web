@@ -1,7 +1,9 @@
 'use client';
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
 
 import {
   createShampooRoomComment,
@@ -19,7 +21,7 @@ import {
 const viewedPostIds = new Set<string>();
 const readPostIds = new Set<string>();
 
-export function useShampooRoomDetailPage(postId: string) {
+export function useShampooRoomDetail(postId: string) {
   const queryClient = useQueryClient();
 
   const [commentInput, setCommentInput] = useState('');
@@ -46,6 +48,19 @@ export function useShampooRoomDetailPage(postId: string) {
     () => commentsData?.pages.flatMap((page) => page.dataList) ?? [],
     [commentsData?.pages],
   );
+
+  const handleFetchNextPage = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const observerRef = useIntersectionObserver({
+    onIntersect: handleFetchNextPage,
+    enabled: !!hasNextPage,
+  });
+
+  const observerTargetIndex = comments.length <= 1 ? 0 : comments.length - 2;
 
   const { mutateAsync: markView } = useMutation({ mutationFn: createShampooRoomView });
   const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
@@ -147,6 +162,8 @@ export function useShampooRoomDetailPage(postId: string) {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    observerRef,
+    observerTargetIndex,
     likeMutation,
     deletePostMutation,
     createCommentMutation,

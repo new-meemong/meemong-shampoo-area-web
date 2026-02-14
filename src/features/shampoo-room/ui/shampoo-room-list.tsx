@@ -3,16 +3,16 @@
 import type { ComponentType, SVGProps } from 'react';
 
 import CommentIcon from '@/assets/icons/comment.svg';
-import EyeIcon from '@/assets/icons/eye.svg';
-import HeartIcon from '@/assets/icons/mdi_heart.svg';
 import LocationIcon from '@/assets/icons/location.svg';
 import ProfileIcon from '@/assets/icons/profile.svg';
-import formatAddress from '@/features/auth/lib/format-address';
-import ShampooRoomWritePostButton from './components/shampoo-room-write-post-button';
-import formatDateTime from '@/shared/lib/formatDateTime';
+import HeartIcon from '@/assets/icons/mdi_heart.svg';
 
-import { useShampooRoomListPage, type CategoryTab, type FilterTab } from '../hooks/use-shampoo-room-list-page';
-import type { ShampooRoomListItem } from '@/entities/shampoo-room';
+import formatAddress from '@/shared/lib/format-address';
+import formatDateTime from '@/shared/lib/formatDateTime';
+import { ShampooRoomCard, type ShampooRoomListItem } from '@/entities/shampoo-room';
+import ShampooRoomWritePostButton from './components/shampoo-room-write-post-button';
+
+import { useShampooRoomList, type CategoryTab, type FilterTab } from '../model/use-shampoo-room-list';
 
 const CATEGORY_TABS: Array<{ label: string; value: CategoryTab }> = [
   { label: '자유글', value: 'FREE' },
@@ -44,7 +44,7 @@ const getPostAddress = (post: ShampooRoomListItem) => {
   return candidate.user.address ?? candidate.userAddress ?? candidate.address ?? '';
 };
 
-export default function ShampooRoomListPage() {
+export default function ShampooRoomList() {
   const {
     categoryTab,
     setCategoryTab,
@@ -60,7 +60,7 @@ export default function ShampooRoomListPage() {
     observerTargetIndex,
     handlePostClick,
     push,
-  } = useShampooRoomListPage();
+  } = useShampooRoomList();
 
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto flex flex-col bg-white">
@@ -124,33 +124,17 @@ export default function ShampooRoomListPage() {
         ) : (
           <div>
             {posts.map((post, index) => (
-              <button
+              <div
                 key={post.id}
                 ref={hasNextPage && index === observerTargetIndex ? observerRef : undefined}
-                type="button"
-                onClick={() => handlePostClick(post)}
-                className="w-full text-left px-5 py-4 border-b border-border-default"
               >
-                <div className="typo-body-2-regular text-label-info">
-                  {formatDateTime(post.createdAt)} · {getPostAddress(post) ? formatAddress(getPostAddress(post)) : '-'}
-                </div>
-                <p className="mt-1 typo-body-1-medium text-label-strong truncate">{post.title}</p>
-                <p className="mt-1 typo-body-2-long-regular text-label-info truncate">{post.content}</p>
-                <div className="mt-2 flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    <HeartIcon className="size-4 fill-label-info" />
-                    <span className="typo-body-2-regular text-label-info">{post.likeCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <CommentIcon className="size-4 fill-label-info" />
-                    <span className="typo-body-2-regular text-label-info">{post.commentCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <EyeIcon className="size-4 fill-label-info" />
-                    <span className="typo-body-2-regular text-label-info">{post.viewCount}</span>
-                  </div>
-                </div>
-              </button>
+                <ShampooRoomCard
+                  post={post}
+                  formattedDate={formatDateTime(post.createdAt)}
+                  formattedAddress={getPostAddress(post) ? formatAddress(getPostAddress(post)) : ''}
+                  onClick={() => handlePostClick(post)}
+                />
+              </div>
             ))}
             {isFetchingNextPage && (
               <div className="p-4 text-center typo-body-2-regular text-label-info">불러오는 중...</div>

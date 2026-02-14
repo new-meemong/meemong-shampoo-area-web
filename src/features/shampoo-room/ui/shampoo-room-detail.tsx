@@ -7,27 +7,28 @@ import ProfileIcon from '@/assets/icons/profile.svg';
 import ReplyIcon from '@/assets/icons/reply.svg';
 import ShareIcon from '@/assets/icons/share.svg';
 
-import { SiteHeader } from '@/widgets/header';
+import { SiteHeader } from '@/shared/ui/site-header';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import formatDateTime from '@/shared/lib/formatDateTime';
 import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
 
-import { useShampooRoomDetailPage } from '../hooks/use-shampoo-room-detail-page';
+import { useShampooRoomDetail } from '../model/use-shampoo-room-detail';
 import type { ShampooRoomComment, ShampooRoomCommentReply } from '@/entities/shampoo-room';
 
-type ShampooRoomDetailPageProps = {
+type ShampooRoomDetailProps = {
   postId: string;
 };
 
-export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageProps) {
+export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const { back, push, replace } = useRouterWithUser();
   const {
     detail,
     isLoading,
     comments,
     hasNextPage,
-    fetchNextPage,
     isFetchingNextPage,
+    observerRef,
+    observerTargetIndex,
     likeMutation,
     deletePostMutation,
     createCommentMutation,
@@ -40,7 +41,7 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
     editTarget,
     setEditTarget,
     handleCommentSubmit,
-  } = useShampooRoomDetailPage(postId);
+  } = useShampooRoomDetail(postId);
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
@@ -67,7 +68,9 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ProfileIcon className="size-8 rounded-6 bg-label-default" />
-            <p className="typo-body-1-semibold text-label-default">익명</p>
+            <p className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}>
+              {reply.isMine ? '글쓴이' : '익명'}
+            </p>
           </div>
           {reply.isMine && (
             <MoreOptionsMenu
@@ -133,7 +136,9 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
             <div className="flex items-center gap-2">
               <ProfileIcon className="size-10 rounded-6 bg-label-default" />
               <div className="flex flex-col">
-                <p className="typo-body-1-semibold text-label-default">익명</p>
+                <p className={`typo-body-1-semibold ${detail.isMine ? 'text-negative-light' : 'text-label-default'}`}>
+                  {detail.isMine ? '글쓴이' : '익명'}
+                </p>
                 <p className="typo-body-3-regular text-label-info">{formatDateTime(detail.createdAt)}</p>
               </div>
             </div>
@@ -156,7 +161,7 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
           )}
         </div>
 
-        <div className="px-5 py-3 flex items-center gap-5">
+        <div className="px-5 py-3 flex items-center justify-around">
           <button
             type="button"
             onClick={() => likeMutation.mutate()}
@@ -186,12 +191,20 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
           {comments.length === 0 ? (
             <p className="p-5 typo-body-2-regular text-label-info">댓글이 없습니다.</p>
           ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className="p-5 border-b border-border-default">
+            comments.map((comment, index) => (
+              <div
+                key={comment.id}
+                ref={hasNextPage && index === observerTargetIndex ? observerRef : undefined}
+                className="p-5 border-b border-border-default"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ProfileIcon className="size-8 rounded-6 bg-label-default" />
-                    <p className="typo-body-1-semibold text-label-default">익명</p>
+                    <p
+                      className={`typo-body-1-semibold ${comment.isMine ? 'text-negative-light' : 'text-label-default'}`}
+                    >
+                      {comment.isMine ? '글쓴이' : '익명'}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -229,18 +242,8 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
               </div>
             ))
           )}
-
-          {hasNextPage && (
-            <div className="p-4">
-              <button
-                type="button"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                className="w-full rounded-8 border border-border-default py-2 typo-body-2-medium text-label-default"
-              >
-                {isFetchingNextPage ? '불러오는 중...' : '댓글 더보기'}
-              </button>
-            </div>
+          {isFetchingNextPage && (
+            <div className="p-4 text-center typo-body-2-regular text-label-info">불러오는 중...</div>
           )}
         </div>
       </div>
@@ -270,13 +273,13 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
             value={commentInput}
             onChange={(e) => setCommentInput(e.target.value)}
             placeholder="댓글을 입력하세요"
-            className="flex-1 rounded-8 border border-border-default px-3 py-2 typo-body-2-regular"
+            className="flex-1 rounded-6 border border-border-default px-3 py-2 typo-body-2-regular focus:outline-none focus:border-border-default"
           />
           <button
             type="button"
             onClick={handleCommentSubmit}
             disabled={createCommentMutation.isPending || updateCommentMutation.isPending}
-            className="rounded-8 bg-label-default text-static-white px-4 typo-body-2-medium disabled:opacity-40"
+            className="rounded-6 bg-label-default text-white px-4 typo-body-2-medium disabled:opacity-40"
           >
             등록
           </button>

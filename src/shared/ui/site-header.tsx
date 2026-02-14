@@ -13,7 +13,7 @@ interface SiteHeaderProps {
 }
 
 export const SiteHeader = ({
-  title = '헤어 상담',
+  title = '샴푸실',
   showBackButton = false,
   onBackClick,
   rightComponent,

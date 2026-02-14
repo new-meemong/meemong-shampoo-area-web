@@ -1,11 +1,11 @@
 'use client';
 
-import ShampooRoomDetailPage from '@/features/shampoo-room/ui/shampoo-room-detail-page';
+import { ShampooRoomDetail } from '@/features/shampoo-room';
 
 type ShampooRoomDetailWidgetProps = {
   postId: string;
 };
 
 export default function ShampooRoomDetailWidget({ postId }: ShampooRoomDetailWidgetProps) {
-  return <ShampooRoomDetailPage postId={postId} />;
+  return <ShampooRoomDetail postId={postId} />;
 }

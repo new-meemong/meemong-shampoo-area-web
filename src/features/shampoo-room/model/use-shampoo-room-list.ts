@@ -17,7 +17,7 @@ const categoryToApi = (category: CategoryTab): ShampooRoomCategory | undefined =
   return category;
 };
 
-export function useShampooRoomListPage() {
+export function useShampooRoomList() {
   const { push } = useRouterWithUser();
 
   const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
@@ -73,13 +73,10 @@ export function useShampooRoomListPage() {
   });
 
   const handlePostClick = useCallback(
-    async (post: ShampooRoomListItem) => {
-      await markView(post.id.toString());
-      try {
-        await markRead(post.id.toString());
-      } catch {
-        // 로그인하지 않은 경우 read API 실패 가능
-      }
+    (post: ShampooRoomListItem) => {
+      // 조회수/읽음 처리는 fire-and-forget으로 실행 (실패해도 페이지 이동에 영향 없음)
+      markView(post.id.toString()).catch(() => {});
+      markRead(post.id.toString()).catch(() => {});
 
       push(`/posts/${post.id}`);
     },

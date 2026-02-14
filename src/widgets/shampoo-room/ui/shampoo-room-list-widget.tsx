@@ -1,7 +1,7 @@
 'use client';
 
-import ShampooRoomListPage from '@/features/shampoo-room/ui/shampoo-room-list-page';
+import { ShampooRoomList } from '@/features/shampoo-room';
 
 export default function ShampooRoomListWidget() {
-  return <ShampooRoomListPage />;
+  return <ShampooRoomList />;
 }
