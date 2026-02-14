@@ -2,9 +2,17 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import CommentIcon from '@/assets/icons/comment.svg';
+import HeartIcon from '@/assets/icons/mdi_heart.svg';
+import MoreHorizontalIcon from '@/assets/icons/more-horizontal.svg';
+import ProfileIcon from '@/assets/icons/profile.svg';
+import ReplyIcon from '@/assets/icons/reply.svg';
+import ShareIcon from '@/assets/icons/share.svg';
 
 import { SiteHeader } from '@/widgets/header';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
+import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
+import formatDateTime from '@/shared/lib/formatDateTime';
 
 import {
   createShampooRoomComment,
@@ -23,6 +31,9 @@ import type { ShampooRoomComment, ShampooRoomCommentReply } from '../types';
 type ShampooRoomDetailPageProps = {
   postId: string;
 };
+
+const viewedPostIds = new Set<string>();
+const readPostIds = new Set<string>();
 
 export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageProps) {
   const queryClient = useQueryClient();
@@ -53,8 +64,8 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
     [commentsData?.pages],
   );
 
-  const { mutate: markView } = useMutation({ mutationFn: createShampooRoomView });
-  const { mutate: markRead } = useMutation({ mutationFn: createShampooRoomRead });
+  const { mutateAsync: markView } = useMutation({ mutationFn: createShampooRoomView });
+  const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -110,11 +121,28 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
 
   useEffect(() => {
     if (!detail) return;
-    markView(postId);
 
-    if (!detail.isRead) {
-      markRead(postId);
-    }
+    const markPostViewAndRead = async () => {
+      if (!viewedPostIds.has(postId)) {
+        viewedPostIds.add(postId);
+        try {
+          await markView(postId);
+        } catch {
+          viewedPostIds.delete(postId);
+        }
+      }
+
+      if (!detail.isRead && !readPostIds.has(postId)) {
+        readPostIds.add(postId);
+        try {
+          await markRead(postId);
+        } catch {
+          readPostIds.delete(postId);
+        }
+      }
+    };
+
+    void markPostViewAndRead();
   }, [detail, markRead, markView, postId]);
 
   const handleShare = async () => {
@@ -151,37 +179,57 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
   };
 
   const renderReply = (reply: ShampooRoomCommentReply) => (
-    <div key={reply.id} className="ml-6 mt-2 rounded-8 bg-alternative p-3">
-      <div className="flex items-center justify-between">
-        <p className="typo-body-3-medium text-label-info">
-          {reply.user.name} · {new Date(reply.createdAt).toLocaleString('ko-KR')}
-        </p>
-        {reply.isMine && (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => startEditComment(reply)}
-              className="typo-body-3-medium text-label-default"
-            >
-              수정
-            </button>
-            <button
-              type="button"
-              onClick={() => deleteCommentMutation.mutate(reply.id)}
-              className="typo-body-3-medium text-negative"
-            >
-              삭제
-            </button>
+    <div key={reply.id} className="flex gap-3 p-5 bg-alternative rounded-6">
+      <ReplyIcon className="size-4.5 fill-label-strong shrink-0 mt-1" />
+      <div className="flex flex-1 flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ProfileIcon className="size-8 rounded-6 bg-label-default" />
+            <p className="typo-body-1-semibold text-label-default">익명</p>
           </div>
-        )}
+          {reply.isMine && (
+            <MoreOptionsMenu
+              trigger={<MoreHorizontalIcon className="size-6" />}
+              options={[
+                {
+                  label: '수정하기',
+                  onClick: () => startEditComment(reply),
+                },
+                {
+                  label: '삭제하기',
+                  onClick: () => deleteCommentMutation.mutate(reply.id),
+                  className: 'text-negative',
+                },
+              ]}
+              contentClassName="-right-[14px]"
+            />
+          )}
+        </div>
+        <p className="typo-body-1-long-regular text-label-default">{reply.content}</p>
+        <p className="typo-body-3-regular text-label-info">{formatDateTime(reply.createdAt)}</p>
       </div>
-      <p className="mt-1 typo-body-2-regular text-label-default">{reply.content}</p>
     </div>
   );
 
   if (isLoading || !detail) {
     return <div className="p-5 typo-body-2-regular text-label-info">불러오는 중...</div>;
   }
+
+  const moreOptions = [
+    {
+      label: '수정하기',
+      onClick: () => push(`/posts/edit/${detail.id}`),
+    },
+    {
+      label: '삭제하기',
+      onClick: () => {
+        if (confirm('게시글을 삭제할까요?')) {
+          deletePostMutation.mutate();
+        }
+      },
+      className: 'text-negative',
+    },
+  ];
 
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">
@@ -191,80 +239,81 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
         onBackClick={back}
         rightComponent={
           detail.isMine ? (
-            <div className="flex gap-3 pr-4">
-              <button
-                type="button"
-                className="typo-body-3-medium text-label-default"
-                onClick={() => push(`/posts/edit/${detail.id}`)}
-              >
-                수정
-              </button>
-              <button
-                type="button"
-                className="typo-body-3-medium text-negative"
-                onClick={() => {
-                  if (confirm('게시글을 삭제할까요?')) {
-                    deletePostMutation.mutate();
-                  }
-                }}
-              >
-                삭제
-              </button>
-            </div>
+            <MoreOptionsMenu
+              trigger={<MoreHorizontalIcon className="size-6" />}
+              options={moreOptions}
+              triggerClassName="size-10 rounded-4 flex items-center justify-center"
+              contentClassName="-right-[14px]"
+            />
           ) : null
         }
       />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-5 border-b border-border-default">
-          <p className="typo-body-3-medium text-label-info">
-            {detail.user.name} · {new Date(detail.createdAt).toLocaleString('ko-KR')}
-          </p>
+        <div className="p-5">
+          <div className="flex justify-start">
+            <div className="flex items-center gap-2">
+              <ProfileIcon className="size-10 rounded-6 bg-label-default" />
+              <div className="flex flex-col">
+                <p className="typo-body-1-semibold text-label-default">익명</p>
+                <p className="typo-body-3-regular text-label-info">{formatDateTime(detail.createdAt)}</p>
+              </div>
+            </div>
+          </div>
           <h1 className="mt-2 typo-title-3-semibold text-label-default">{detail.title}</h1>
           <p className="mt-3 whitespace-pre-wrap typo-body-1-long-regular text-label-default">
             {detail.content}
           </p>
 
           {detail.images.length > 0 && (
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {detail.images.slice(0, 3).map((image, index) => (
-                <div key={`${image.imageUrl}-${index}`} className="rounded-6 overflow-hidden border border-border-default">
+            <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-hide">
+              {detail.images.map((image, index) => (
+                <div
+                  key={`${image.imageUrl}-${index}`}
+                  className="size-[140px] shrink-0 rounded-6 overflow-hidden border border-border-default"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.imageUrl} alt="게시글 이미지" className="w-full h-24 object-cover" />
+                  <img src={image.imageUrl} alt="게시글 이미지" className="size-full object-cover" />
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="px-5 py-3 border-b border-border-default flex items-center gap-4">
+        <div className="px-5 py-3 flex items-center gap-5">
           <button
             type="button"
             onClick={() => likeMutation.mutate()}
-            className={`typo-body-2-medium ${detail.isLiked ? 'text-negative' : 'text-label-default'}`}
+            className={`inline-flex items-center gap-1 typo-body-2-medium ${
+              detail.isLiked ? 'text-negative' : 'text-label-info'
+            }`}
           >
-            좋아요 {detail.likeCount}
+            <HeartIcon className={`size-5 ${detail.isLiked ? 'fill-negative-light' : 'fill-label-info'}`} />
+            {detail.likeCount}
           </button>
-          <button type="button" className="typo-body-2-medium text-label-default">
-            댓글 {detail.commentCount}
+          <button type="button" className="inline-flex items-center gap-1 typo-body-2-medium text-label-info">
+            <CommentIcon className="size-5 fill-label-info" />
+            {detail.commentCount}
           </button>
-          <button type="button" onClick={handleShare} className="typo-body-2-medium text-label-default">
+          <button type="button" onClick={handleShare} className="inline-flex items-center gap-1 typo-body-2-medium text-label-info">
+            <ShareIcon className="size-5 fill-label-info" />
             공유
           </button>
-          <p className="ml-auto typo-body-3-regular text-label-info">조회 {detail.viewCount}</p>
         </div>
+        <div className="w-full h-1.5 bg-alternative" />
 
         <div>
           {comments.length === 0 ? (
             <p className="p-5 typo-body-2-regular text-label-info">댓글이 없습니다.</p>
           ) : (
             comments.map((comment) => (
-              <div key={comment.id} className="p-4 border-b border-border-default">
+              <div key={comment.id} className="p-5 border-b border-border-default">
                 <div className="flex items-center justify-between">
-                  <p className="typo-body-3-medium text-label-info">
-                    {comment.user.name} · {new Date(comment.createdAt).toLocaleString('ko-KR')}
-                  </p>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    <ProfileIcon className="size-8 rounded-6 bg-label-default" />
+                    <p className="typo-body-1-semibold text-label-default">익명</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -272,32 +321,38 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
                         setEditTarget(null);
                         setCommentInput('');
                       }}
-                      className="typo-body-3-medium text-label-default"
+                      className="typo-body-2-medium text-label-info"
                     >
                       답글
                     </button>
                     {comment.isMine && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => startEditComment(comment)}
-                          className="typo-body-3-medium text-label-default"
-                        >
-                          수정
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteCommentMutation.mutate(comment.id)}
-                          className="typo-body-3-medium text-negative"
-                        >
-                          삭제
-                        </button>
-                      </>
+                      <MoreOptionsMenu
+                        trigger={<MoreHorizontalIcon className="size-6" />}
+                        options={[
+                          {
+                            label: '수정하기',
+                            onClick: () => startEditComment(comment),
+                          },
+                          {
+                            label: '삭제하기',
+                            onClick: () => deleteCommentMutation.mutate(comment.id),
+                            className: 'text-negative',
+                          },
+                        ]}
+                        contentClassName="-right-[14px]"
+                      />
                     )}
                   </div>
                 </div>
-                <p className="mt-1 typo-body-2-regular text-label-default">{comment.content}</p>
-                {comment.replies.map(renderReply)}
+                <p className="mt-3 typo-body-1-long-regular text-label-default">{comment.content}</p>
+                <p className="mt-2 typo-body-3-regular text-label-info">
+                  {formatDateTime(comment.createdAt)}
+                </p>
+                {comment.replies.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-2">
+                    {comment.replies.map(renderReply)}
+                  </div>
+                )}
               </div>
             ))
           )}

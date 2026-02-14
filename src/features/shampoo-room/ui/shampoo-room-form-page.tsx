@@ -9,7 +9,7 @@ import {
 } from '@/shared/ui/drawer';
 import { createShampooRoom, getShampooRoomDetail, updateShampooRoom } from '../api';
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/shared';
 import GalleryIcon from '@/assets/icons/gallery.svg';
@@ -42,6 +42,7 @@ export default function ShampooRoomFormPage({ postId }: ShampooRoomFormPageProps
   const isEdit = !!postId;
   const { back, replace } = useRouterWithUser();
   const { showBottomSheet } = useOverlayContext();
+  const queryClient = useQueryClient();
 
   const { data: detailData } = useQuery({
     queryKey: ['shampoo-room-detail', postId],
@@ -160,6 +161,10 @@ export default function ShampooRoomFormPage({ postId }: ShampooRoomFormPageProps
         id: postId,
         data: payload,
       });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] }),
+        queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] }),
+      ]);
       replace(`/posts/${postId}`);
       return;
     }
