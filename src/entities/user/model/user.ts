@@ -1,11 +1,3 @@
-import type {
-  HairConsultationConcern,
-  HairConsultationHairLength,
-  HairConsultationHairTexture,
-  HairConsultationPersonalColor,
-  HairConsultationSkinBrightness,
-} from '@/entities/posts/api/create-hair-consultation-request';
-
 import { USER_ROLE } from '../constants/user-role';
 import type { ValueOf } from '@/shared/type/types';
 
@@ -38,9 +30,4 @@ export interface User {
   appIdentifierId: string | null;
   token: string;
   DisplayName?: string;
-  hairLength?: HairConsultationHairLength | null;
-  hairConcerns?: HairConsultationConcern[] | null;
-  hairTexture?: HairConsultationHairTexture | null;
-  skinBrightness?: HairConsultationSkinBrightness | null;
-  personalColor?: HairConsultationPersonalColor | null;
 }

@@ -10,7 +10,7 @@ import type {
   ShampooRoomListQuery,
   UpdateShampooRoomCommentRequest,
   UpdateShampooRoomRequest,
-} from './types';
+} from '@/entities/shampoo-room';
 
 const API_PREFIX = 'shampoo-rooms';
 

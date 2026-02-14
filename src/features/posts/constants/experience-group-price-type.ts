@@ -1,5 +1,0 @@
-export const EXPERIENCE_GROUP_PRICE_TYPE = {
-  PAY: 'PAY',
-  FREE: 'FREE',
-  MATERIAL_COST: 'MATERIAL_COST',
-} as const;

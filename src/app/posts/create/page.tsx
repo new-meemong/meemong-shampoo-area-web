@@ -1,5 +1,5 @@
-import ShampooRoomFormPage from '@/features/shampoo-room/ui/shampoo-room-form-page';
+import { ShampooRoomFormWidget } from '@/widgets/shampoo-room';
 
 export default function CreatePostPage() {
-  return <ShampooRoomFormPage />;
+  return <ShampooRoomFormWidget />;
 }

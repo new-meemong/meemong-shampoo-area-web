@@ -8,7 +8,7 @@ export function goDesignerProfilePage(
 ) {
   if (window.goAppRouter) {
     const params = new URLSearchParams();
-    params.set('from', 'hairConsultation');
+    params.set('from', 'shampooRoom');
     // null이 아닌 경우에만 파라미터 추가 (null은 명시적으로 전달하지 않음)
     if (options?.postId !== undefined && options.postId !== null) {
       params.set('postId', options.postId);

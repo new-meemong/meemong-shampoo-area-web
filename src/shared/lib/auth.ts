@@ -1,8 +1,6 @@
 import { USER_GUIDE_KEYS, USER_WRITING_CONTENT_KEYS } from '@/shared/constants/local-storage';
 
-import type { SelectedRegion } from '@/features/region/types/selected-region';
 import type { User } from '@/entities/user/model/user';
-import type { UserWritingContent } from '@/features/posts/types/user-writing-content';
 
 export interface JWTPayload {
   userId: number;
@@ -11,11 +9,16 @@ export interface JWTPayload {
 
 export interface UserGuideData {
   [USER_GUIDE_KEYS.hasSeenCreatePostGuide]: boolean;
-  [USER_GUIDE_KEYS.hasSeenDesignerOnboardingGuide]: boolean;
-  [USER_GUIDE_KEYS.hasSeenConsultingResponseSidebarGuide]: boolean;
-  [USER_GUIDE_KEYS.hasSeenHairConsultationOnboardingModel]: boolean;
-  [USER_GUIDE_KEYS.hasSeenHairConsultationOnboardingDesigner]: boolean;
 }
+
+export type SelectedRegion = {
+  key: string;
+  values: string[];
+};
+
+export type UserWritingContent = {
+  [USER_WRITING_CONTENT_KEYS.shampooRoomPost]: unknown;
+};
 
 export type UserData = User & UserWritingContent;
 
@@ -43,10 +46,7 @@ export const decodeJWTPayload = (token: string): JWTPayload | null => {
 export const getDefaultUserData = (user: User): UserData => {
   return {
     ...user,
-    [USER_WRITING_CONTENT_KEYS.consultingPost]: null,
-    [USER_WRITING_CONTENT_KEYS.hairConsultation]: null,
-    [USER_WRITING_CONTENT_KEYS.consultingResponse]: [],
-    [USER_WRITING_CONTENT_KEYS.experienceGroup]: null,
+    [USER_WRITING_CONTENT_KEYS.shampooRoomPost]: null,
   };
 };
 
@@ -91,10 +91,6 @@ const getUserGuideDataKey = (): string => {
 const getDefaultUserGuideData = (): UserGuideData => {
   return {
     [USER_GUIDE_KEYS.hasSeenCreatePostGuide]: false,
-    [USER_GUIDE_KEYS.hasSeenDesignerOnboardingGuide]: false,
-    [USER_GUIDE_KEYS.hasSeenConsultingResponseSidebarGuide]: false,
-    [USER_GUIDE_KEYS.hasSeenHairConsultationOnboardingModel]: false,
-    [USER_GUIDE_KEYS.hasSeenHairConsultationOnboardingDesigner]: false,
   };
 };
 

@@ -1,5 +1,5 @@
-import ShampooRoomListPage from '@/features/shampoo-room/ui/shampoo-room-list-page';
+import { ShampooRoomListWidget } from '@/widgets/shampoo-room';
 
 export default function PostsPage() {
-  return <ShampooRoomListPage />;
+  return <ShampooRoomListWidget />;
 }

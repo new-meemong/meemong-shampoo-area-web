@@ -1,4 +1,4 @@
-import ShampooRoomDetailPage from '@/features/shampoo-room/ui/shampoo-room-detail-page';
+import { ShampooRoomDetailWidget } from '@/widgets/shampoo-room';
 
 type PostDetailPageProps = {
   params: Promise<{ postId: string }>;
@@ -7,5 +7,5 @@ type PostDetailPageProps = {
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { postId } = await params;
 
-  return <ShampooRoomDetailPage postId={postId} />;
+  return <ShampooRoomDetailWidget postId={postId} />;
 }

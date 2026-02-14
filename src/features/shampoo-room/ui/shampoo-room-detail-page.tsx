@@ -1,7 +1,5 @@
 'use client';
 
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
 import CommentIcon from '@/assets/icons/comment.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
 import MoreHorizontalIcon from '@/assets/icons/more-horizontal.svg';
@@ -11,139 +9,38 @@ import ShareIcon from '@/assets/icons/share.svg';
 
 import { SiteHeader } from '@/widgets/header';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
-import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
 import formatDateTime from '@/shared/lib/formatDateTime';
+import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
 
-import {
-  createShampooRoomComment,
-  createShampooRoomLike,
-  createShampooRoomRead,
-  createShampooRoomView,
-  deleteShampooRoom,
-  deleteShampooRoomComment,
-  deleteShampooRoomLike,
-  getShampooRoomComments,
-  getShampooRoomDetail,
-  updateShampooRoomComment,
-} from '../api';
-import type { ShampooRoomComment, ShampooRoomCommentReply } from '../types';
+import { useShampooRoomDetailPage } from '../hooks/use-shampoo-room-detail-page';
+import type { ShampooRoomComment, ShampooRoomCommentReply } from '@/entities/shampoo-room';
 
 type ShampooRoomDetailPageProps = {
   postId: string;
 };
 
-const viewedPostIds = new Set<string>();
-const readPostIds = new Set<string>();
-
 export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageProps) {
-  const queryClient = useQueryClient();
   const { back, push, replace } = useRouterWithUser();
-
-  const [commentInput, setCommentInput] = useState('');
-  const [replyTargetCommentId, setReplyTargetCommentId] = useState<number | null>(null);
-  const [editTarget, setEditTarget] = useState<{ id: number; content: string } | null>(null);
-
-  const { data: detail, isLoading } = useQuery({
-    queryKey: ['shampoo-room-detail', postId],
-    queryFn: () => getShampooRoomDetail(postId),
-  });
-
-  const { data: commentsData, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['shampoo-room-comments', postId],
-    queryFn: ({ pageParam }) =>
-      getShampooRoomComments(postId, {
-        __nextCursor: pageParam,
-        __limit: 20,
-      }),
-    getNextPageParam: (lastPage) => lastPage.__nextCursor,
-    initialPageParam: undefined as string | undefined,
-  });
-
-  const comments = useMemo(
-    () => commentsData?.pages.flatMap((page) => page.dataList) ?? [],
-    [commentsData?.pages],
-  );
-
-  const { mutateAsync: markView } = useMutation({ mutationFn: createShampooRoomView });
-  const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
-
-  const likeMutation = useMutation({
-    mutationFn: async () => {
-      if (!detail) return;
-      if (detail.isLiked) {
-        await deleteShampooRoomLike(postId);
-      } else {
-        await createShampooRoomLike(postId);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] });
-      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
-    },
-  });
-
-  const deletePostMutation = useMutation({
-    mutationFn: () => deleteShampooRoom(postId),
-    onSuccess: () => {
-      replace('/posts');
-    },
-  });
-
-  const createCommentMutation = useMutation({
-    mutationFn: (payload: { content: string; parentCommentId?: number }) =>
-      createShampooRoomComment(postId, payload),
-    onSuccess: () => {
-      setCommentInput('');
-      setReplyTargetCommentId(null);
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-comments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] });
-      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
-    },
-  });
-
-  const updateCommentMutation = useMutation({
-    mutationFn: (payload: { id: number; content: string }) =>
-      updateShampooRoomComment(postId, payload.id, { content: payload.content }),
-    onSuccess: () => {
-      setEditTarget(null);
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-comments', postId] });
-    },
-  });
-
-  const deleteCommentMutation = useMutation({
-    mutationFn: (commentId: number) => deleteShampooRoomComment(postId, commentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-comments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] });
-      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
-    },
-  });
-
-  useEffect(() => {
-    if (!detail) return;
-
-    const markPostViewAndRead = async () => {
-      if (!viewedPostIds.has(postId)) {
-        viewedPostIds.add(postId);
-        try {
-          await markView(postId);
-        } catch {
-          viewedPostIds.delete(postId);
-        }
-      }
-
-      if (!detail.isRead && !readPostIds.has(postId)) {
-        readPostIds.add(postId);
-        try {
-          await markRead(postId);
-        } catch {
-          readPostIds.delete(postId);
-        }
-      }
-    };
-
-    void markPostViewAndRead();
-  }, [detail, markRead, markView, postId]);
+  const {
+    detail,
+    isLoading,
+    comments,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    likeMutation,
+    deletePostMutation,
+    createCommentMutation,
+    updateCommentMutation,
+    deleteCommentMutation,
+    commentInput,
+    setCommentInput,
+    replyTargetCommentId,
+    setReplyTargetCommentId,
+    editTarget,
+    setEditTarget,
+    handleCommentSubmit,
+  } = useShampooRoomDetailPage(postId);
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
@@ -155,21 +52,6 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
 
     await navigator.clipboard.writeText(shareUrl);
     alert('링크가 복사되었습니다.');
-  };
-
-  const handleCommentSubmit = async () => {
-    const trimmed = commentInput.trim();
-    if (!trimmed) return;
-
-    if (editTarget) {
-      await updateCommentMutation.mutateAsync({ id: editTarget.id, content: trimmed });
-      return;
-    }
-
-    await createCommentMutation.mutateAsync({
-      content: trimmed,
-      ...(replyTargetCommentId ? { parentCommentId: replyTargetCommentId } : {}),
-    });
   };
 
   const startEditComment = (comment: ShampooRoomComment | ShampooRoomCommentReply) => {
@@ -191,10 +73,7 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
             <MoreOptionsMenu
               trigger={<MoreHorizontalIcon className="size-6" />}
               options={[
-                {
-                  label: '수정하기',
-                  onClick: () => startEditComment(reply),
-                },
+                { label: '수정하기', onClick: () => startEditComment(reply) },
                 {
                   label: '삭제하기',
                   onClick: () => deleteCommentMutation.mutate(reply.id),
@@ -216,15 +95,14 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
   }
 
   const moreOptions = [
-    {
-      label: '수정하기',
-      onClick: () => push(`/posts/edit/${detail.id}`),
-    },
+    { label: '수정하기', onClick: () => push(`/posts/edit/${detail.id}`) },
     {
       label: '삭제하기',
       onClick: () => {
         if (confirm('게시글을 삭제할까요?')) {
-          deletePostMutation.mutate();
+          deletePostMutation.mutate(undefined, {
+            onSuccess: () => replace('/posts'),
+          });
         }
       },
       className: 'text-negative',
@@ -261,9 +139,7 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
             </div>
           </div>
           <h1 className="mt-2 typo-title-3-semibold text-label-default">{detail.title}</h1>
-          <p className="mt-3 whitespace-pre-wrap typo-body-1-long-regular text-label-default">
-            {detail.content}
-          </p>
+          <p className="mt-3 whitespace-pre-wrap typo-body-1-long-regular text-label-default">{detail.content}</p>
 
           {detail.images.length > 0 && (
             <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-hide">
@@ -295,7 +171,11 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
             <CommentIcon className="size-5 fill-label-info" />
             {detail.commentCount}
           </button>
-          <button type="button" onClick={handleShare} className="inline-flex items-center gap-1 typo-body-2-medium text-label-info">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="inline-flex items-center gap-1 typo-body-2-medium text-label-info"
+          >
             <ShareIcon className="size-5 fill-label-info" />
             공유
           </button>
@@ -329,10 +209,7 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
                       <MoreOptionsMenu
                         trigger={<MoreHorizontalIcon className="size-6" />}
                         options={[
-                          {
-                            label: '수정하기',
-                            onClick: () => startEditComment(comment),
-                          },
+                          { label: '수정하기', onClick: () => startEditComment(comment) },
                           {
                             label: '삭제하기',
                             onClick: () => deleteCommentMutation.mutate(comment.id),
@@ -345,13 +222,9 @@ export default function ShampooRoomDetailPage({ postId }: ShampooRoomDetailPageP
                   </div>
                 </div>
                 <p className="mt-3 typo-body-1-long-regular text-label-default">{comment.content}</p>
-                <p className="mt-2 typo-body-3-regular text-label-info">
-                  {formatDateTime(comment.createdAt)}
-                </p>
+                <p className="mt-2 typo-body-3-regular text-label-info">{formatDateTime(comment.createdAt)}</p>
                 {comment.replies.length > 0 && (
-                  <div className="mt-3 flex flex-col gap-2">
-                    {comment.replies.map(renderReply)}
-                  </div>
+                  <div className="mt-3 flex flex-col gap-2">{comment.replies.map(renderReply)}</div>
                 )}
               </div>
             ))

@@ -1,4 +1,4 @@
-import ShampooRoomFormPage from '@/features/shampoo-room/ui/shampoo-room-form-page';
+import { ShampooRoomFormWidget } from '@/widgets/shampoo-room';
 
 type EditPostPageProps = {
   params: Promise<{ id: string }>;
@@ -7,5 +7,5 @@ type EditPostPageProps = {
 export default async function EditPostPage({ params }: EditPostPageProps) {
   const { id } = await params;
 
-  return <ShampooRoomFormPage postId={id} />;
+  return <ShampooRoomFormWidget postId={id} />;
 }

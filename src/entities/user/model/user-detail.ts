@@ -1,19 +1,7 @@
-import type {
-  HairConsultationConcern,
-  HairConsultationHairLength,
-  HairConsultationHairTexture,
-  HairConsultationPersonalColor,
-  HairConsultationSkinBrightness,
-} from '@/entities/posts/api/create-hair-consultation-request';
-
 import type { User } from './user';
 
 export type UserModelInfo = {
-  hairLength?: HairConsultationHairLength | null;
-  hairConcerns?: HairConsultationConcern[] | null;
-  hairTexture?: HairConsultationHairTexture | null;
-  skinBrightness?: HairConsultationSkinBrightness | null;
-  personalColor?: HairConsultationPersonalColor | null;
+  details?: Record<string, unknown> | null;
 };
 
 export type UserDetail = User & {

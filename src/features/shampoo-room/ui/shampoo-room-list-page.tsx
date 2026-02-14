@@ -1,24 +1,18 @@
 'use client';
 
 import type { ComponentType, SVGProps } from 'react';
-import type { ShampooRoomCategory, ShampooRoomListItem } from '../types';
-import { createShampooRoomRead, createShampooRoomView, getShampooRooms } from '../api';
-import { useCallback, useMemo, useState } from 'react';
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 
 import CommentIcon from '@/assets/icons/comment.svg';
 import EyeIcon from '@/assets/icons/eye.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
 import LocationIcon from '@/assets/icons/location.svg';
 import ProfileIcon from '@/assets/icons/profile.svg';
-import { WritePostButton } from '@/features/posts/ui/write-post-button';
 import formatAddress from '@/features/auth/lib/format-address';
+import ShampooRoomWritePostButton from './components/shampoo-room-write-post-button';
 import formatDateTime from '@/shared/lib/formatDateTime';
-import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
-import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 
-type CategoryTab = 'FREE' | 'POPULAR' | 'EDUCATION' | 'PRODUCT' | 'MARKET';
-type FilterTab = 'NONE' | 'MINE' | 'COMMENTED' | 'LIKED' | 'REGION';
+import { useShampooRoomListPage, type CategoryTab, type FilterTab } from '../hooks/use-shampoo-room-list-page';
+import type { ShampooRoomListItem } from '@/entities/shampoo-room';
 
 const CATEGORY_TABS: Array<{ label: string; value: CategoryTab }> = [
   { label: '자유글', value: 'FREE' },
@@ -40,11 +34,6 @@ const FILTER_TABS: Array<{
   { label: '지역', value: 'REGION', icon: LocationIcon },
 ];
 
-const categoryToApi = (category: CategoryTab): ShampooRoomCategory | undefined => {
-  if (category === 'POPULAR') return undefined;
-  return category;
-};
-
 const getPostAddress = (post: ShampooRoomListItem) => {
   const candidate = post as ShampooRoomListItem & {
     address?: string;
@@ -56,76 +45,22 @@ const getPostAddress = (post: ShampooRoomListItem) => {
 };
 
 export default function ShampooRoomListPage() {
-  const { push } = useRouterWithUser();
-
-  const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
-  const [filterTab, setFilterTab] = useState<FilterTab>('NONE');
-  const [regionInput, setRegionInput] = useState('');
-
-  const { mutateAsync: markView } = useMutation({
-    mutationFn: createShampooRoomView,
-  });
-  const { mutateAsync: markRead } = useMutation({
-    mutationFn: createShampooRoomRead,
-  });
-
-  const addresses = useMemo(() => {
-    if (filterTab !== 'REGION') return undefined;
-    return regionInput
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
-  }, [filterTab, regionInput]);
-
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['shampoo-rooms', categoryTab, filterTab, addresses?.join(',')],
-    queryFn: ({ pageParam }) =>
-      getShampooRooms({
-        __nextCursor: pageParam,
-        __limit: 20,
-        category: categoryToApi(categoryTab),
-        isMine: filterTab === 'MINE' ? true : undefined,
-        isLiked: filterTab === 'LIKED' ? true : undefined,
-        isRead: filterTab === 'COMMENTED' ? true : undefined,
-        addresses,
-      }),
-    getNextPageParam: (lastPage) => lastPage.__nextCursor,
-    initialPageParam: undefined as string | undefined,
-  });
-
-  const posts = useMemo(() => {
-    const allPosts = data?.pages.flatMap((page) => page.dataList) ?? [];
-
-    if (categoryTab === 'POPULAR') {
-      return [...allPosts].sort((a, b) => b.likeCount - a.likeCount);
-    }
-
-    return allPosts;
-  }, [categoryTab, data?.pages]);
-
-  const handleFetchNextPage = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const observerRef = useIntersectionObserver({
-    onIntersect: handleFetchNextPage,
-    enabled: !!hasNextPage,
-  });
-
-  const handlePostClick = async (post: ShampooRoomListItem) => {
-    await markView(post.id.toString());
-    try {
-      await markRead(post.id.toString());
-    } catch {
-      // 로그인하지 않은 경우 read API 실패 가능
-    }
-
-    push(`/posts/${post.id}`);
-  };
-
-  const observerTargetIndex = posts.length <= 1 ? 0 : posts.length - 2;
+  const {
+    categoryTab,
+    setCategoryTab,
+    filterTab,
+    setFilterTab,
+    regionInput,
+    setRegionInput,
+    posts,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    observerRef,
+    observerTargetIndex,
+    handlePostClick,
+    push,
+  } = useShampooRoomListPage();
 
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto flex flex-col bg-white">
@@ -137,9 +72,7 @@ export default function ShampooRoomListPage() {
               type="button"
               onClick={() => setCategoryTab(tab.value)}
               className={`shrink-0 rounded-6 border border-border-default px-3 py-2 typo-body-2-medium ${
-                categoryTab === tab.value
-                  ? 'bg-label-default text-white'
-                  : 'bg-white text-label-sub'
+                categoryTab === tab.value ? 'bg-label-default text-white' : 'bg-white text-label-sub'
               }`}
             >
               {tab.label}
@@ -199,13 +132,10 @@ export default function ShampooRoomListPage() {
                 className="w-full text-left px-5 py-4 border-b border-border-default"
               >
                 <div className="typo-body-2-regular text-label-info">
-                  {formatDateTime(post.createdAt)} ·{' '}
-                  {getPostAddress(post) ? formatAddress(getPostAddress(post)) : '-'}
+                  {formatDateTime(post.createdAt)} · {getPostAddress(post) ? formatAddress(getPostAddress(post)) : '-'}
                 </div>
                 <p className="mt-1 typo-body-1-medium text-label-strong truncate">{post.title}</p>
-                <p className="mt-1 typo-body-2-long-regular text-label-info truncate">
-                  {post.content}
-                </p>
+                <p className="mt-1 typo-body-2-long-regular text-label-info truncate">{post.content}</p>
                 <div className="mt-2 flex items-center gap-3">
                   <div className="flex items-center gap-1">
                     <HeartIcon className="size-4 fill-label-info" />
@@ -223,15 +153,13 @@ export default function ShampooRoomListPage() {
               </button>
             ))}
             {isFetchingNextPage && (
-              <div className="p-4 text-center typo-body-2-regular text-label-info">
-                불러오는 중...
-              </div>
+              <div className="p-4 text-center typo-body-2-regular text-label-info">불러오는 중...</div>
             )}
           </div>
         )}
       </div>
 
-      <WritePostButton className="fixed right-5 bottom-5" onClick={() => push('/posts/create')} />
+      <ShampooRoomWritePostButton className="fixed right-5 bottom-5" onClick={() => push('/posts/create')} />
     </div>
   );
 }
