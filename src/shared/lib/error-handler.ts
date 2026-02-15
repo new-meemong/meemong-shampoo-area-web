@@ -1,15 +1,43 @@
 import type { ApiError } from '../api/client';
 import type { HTTPError } from 'ky';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 export function getApiError(error: unknown): ApiError {
   // HTTPError인 경우 response.data에서 ApiError 추출
   if (error && typeof error === 'object' && 'response' in error) {
     const httpError = error as HTTPError & {
       response?: { data?: { error?: ApiError }; status?: number };
     };
-    if (httpError.response?.data?.error) {
-      return httpError.response.data.error;
+    const responseData = httpError.response?.data as unknown;
+    if (isRecord(responseData)) {
+      // 표준 포맷: { error: { ... } }
+      if (isRecord(responseData.error)) {
+        const apiError = responseData.error as Partial<ApiError>;
+        if (typeof apiError.message === 'string') {
+          return {
+            code: apiError.code ?? 'HTTP_ERROR',
+            message: apiError.message,
+            httpCode: apiError.httpCode ?? httpError.response?.status ?? 500,
+            fieldErrors: apiError.fieldErrors,
+          };
+        }
+      }
+
+      // 단순 포맷: { message: "...", code?: "...", fieldErrors?: [...] }
+      if (typeof responseData.message === 'string') {
+        return {
+          code: typeof responseData.code === 'string' ? responseData.code : 'HTTP_ERROR',
+          message: responseData.message,
+          httpCode: httpError.response?.status ?? 500,
+          fieldErrors: Array.isArray(responseData.fieldErrors)
+            ? (responseData.fieldErrors as ApiError['fieldErrors'])
+            : undefined,
+        };
+      }
     }
+
     // response.data가 없지만 status가 있는 경우
     if (httpError.response?.status) {
       return {
@@ -24,6 +52,15 @@ export function getApiError(error: unknown): ApiError {
   const apiError = error as ApiError;
   if (apiError && typeof apiError === 'object' && 'httpCode' in apiError) {
     return apiError;
+  }
+
+  // 일반 Error 타입인 경우 message 우선 사용
+  if (error instanceof Error && error.message) {
+    return {
+      code: 'UNKNOWN_ERROR',
+      message: error.message,
+      httpCode: 500,
+    };
   }
 
   // 기본 에러
