@@ -114,9 +114,9 @@ export const updateUserGuideData = (userGuideData: Partial<UserGuideData>): void
   localStorage.setItem(userGuideDataKey, JSON.stringify(updatedUserGuideData));
 };
 
-const getUserSelectedRegionDataKey = (): string => {
+const getUserSelectedRegionDataKey = (): string | null => {
   const currentUser = getCurrentUser();
-  if (!currentUser) return '';
+  if (!currentUser) return null;
 
   return `${USER_SELECTED_REGION_DATA_KEY_PREFIX}${currentUser.id}`;
 };
@@ -125,15 +125,42 @@ export const getUserSelectedRegionData = (): SelectedRegion | null => {
   if (typeof window === 'undefined') return null;
 
   const userSelectedRegionDataKey = getUserSelectedRegionDataKey();
+  if (!userSelectedRegionDataKey) return null;
   const userSelectedRegionData = localStorage.getItem(userSelectedRegionDataKey);
 
   if (!userSelectedRegionData) return null;
 
-  return JSON.parse(userSelectedRegionData);
+  try {
+    const parsed = JSON.parse(userSelectedRegionData) as SelectedRegion | null;
+
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (typeof parsed.key !== 'string') return null;
+    if (!Array.isArray(parsed.values)) return null;
+
+    return parsed;
+  } catch {
+    return null;
+  }
 };
 
 export const updateUserSelectedRegionData = (selectedRegion: SelectedRegion | null): void => {
   const userSelectedRegionDataKey = getUserSelectedRegionDataKey();
+  if (!userSelectedRegionDataKey) {
+    if (!selectedRegion && typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith(USER_SELECTED_REGION_DATA_KEY_PREFIX)) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    return;
+  }
+
+  if (!selectedRegion) {
+    localStorage.removeItem(userSelectedRegionDataKey);
+    return;
+  }
+
   localStorage.setItem(userSelectedRegionDataKey, JSON.stringify(selectedRegion));
 };
 
