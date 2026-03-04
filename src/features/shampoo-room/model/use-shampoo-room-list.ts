@@ -5,13 +5,16 @@ import { createShampooRoomRead, createShampooRoomView, getShampooRooms } from '.
 import { normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
+import useSelectedRegion, {
+  convertSelectedRegionToAddresses,
+  getSelectedRegionLabel,
+} from './use-selected-region';
 
 import { ROUTES } from '@/shared';
 import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useSearchParams } from 'next/navigation';
-import useSelectedRegion, { convertSelectedRegionToAddresses, getSelectedRegionLabel } from './use-selected-region';
 
 export type CategoryTab = 'FREE' | 'POPULAR' | 'EDUCATION' | 'PRODUCT' | 'MARKET';
 export type FilterTab = 'NONE' | 'MINE' | 'COMMENTED' | 'LIKED' | 'REGION';
@@ -25,7 +28,7 @@ export function useShampooRoomList() {
   const { push } = useRouterWithUser();
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
-  const { userSelectedRegionData } = useSelectedRegion();
+  const { userSelectedRegionData, setSelectedRegionData } = useSelectedRegion();
 
   const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
   const [filterTab, setFilterTab] = useState<FilterTab>('NONE');
@@ -59,9 +62,13 @@ export function useShampooRoomList() {
         return;
       }
 
+      if (userSelectedRegionData) {
+        setSelectedRegionData(null);
+      }
+
       setFilterTab((prev) => (prev === tab ? 'NONE' : tab));
     },
-    [push],
+    [push, setSelectedRegionData, userSelectedRegionData],
   );
 
   const handleWritePostClick = useCallback(() => {
