@@ -55,6 +55,8 @@ export function useShampooRoomList() {
     [userSelectedRegionData],
   );
 
+  const hasSelectedRegion = !!userSelectedRegionData;
+
   const handleFilterTabClick = useCallback(
     (tab: FilterTab) => {
       if (tab === 'REGION') {
@@ -70,6 +72,11 @@ export function useShampooRoomList() {
     },
     [push, setSelectedRegionData, userSelectedRegionData],
   );
+
+  const handleClearSelectedRegion = useCallback(() => {
+    setSelectedRegionData(null);
+    setFilterTab((prev) => (prev === 'REGION' ? 'NONE' : prev));
+  }, [setSelectedRegionData]);
 
   const handleWritePostClick = useCallback(() => {
     if (source === 'app') {
@@ -143,8 +150,10 @@ export function useShampooRoomList() {
     categoryTab,
     setCategoryTab,
     filterTab,
+    hasSelectedRegion,
     selectedRegionLabel,
     handleFilterTabClick,
+    handleClearSelectedRegion,
     posts,
     isLoading,
     isFetchingNextPage,

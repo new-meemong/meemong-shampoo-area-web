@@ -1,8 +1,9 @@
 'use client';
 
-import type { ComponentType, SVGProps } from 'react';
+import type { ComponentType, MouseEvent, SVGProps } from 'react';
 
 import CommentIcon from '@/assets/icons/comment.svg';
+import CloseIcon from '@/assets/icons/close.svg';
 import LocationIcon from '@/assets/icons/location.svg';
 import ProfileIcon from '@/assets/icons/profile.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
@@ -12,7 +13,11 @@ import formatDateTime from '@/shared/lib/formatDateTime';
 import { ShampooRoomCard, type ShampooRoomListItem } from '@/entities/shampoo-room';
 import ShampooRoomWritePostButton from './components/shampoo-room-write-post-button';
 
-import { useShampooRoomList, type CategoryTab, type FilterTab } from '../model/use-shampoo-room-list';
+import {
+  useShampooRoomList,
+  type CategoryTab,
+  type FilterTab,
+} from '../model/use-shampoo-room-list';
 
 const CATEGORY_TABS: Array<{ label: string; value: CategoryTab }> = [
   { label: '자유글', value: 'FREE' },
@@ -49,8 +54,10 @@ export default function ShampooRoomList() {
     categoryTab,
     setCategoryTab,
     filterTab,
+    hasSelectedRegion,
     selectedRegionLabel,
     handleFilterTabClick,
+    handleClearSelectedRegion,
     posts,
     isLoading,
     isFetchingNextPage,
@@ -71,7 +78,9 @@ export default function ShampooRoomList() {
               type="button"
               onClick={() => setCategoryTab(tab.value)}
               className={`shrink-0 rounded-6 border border-border-default px-3 py-2 typo-body-2-medium ${
-                categoryTab === tab.value ? 'bg-label-default text-white' : 'bg-white text-label-sub'
+                categoryTab === tab.value
+                  ? 'bg-label-default text-white'
+                  : 'bg-white text-label-sub'
               }`}
             >
               {tab.label}
@@ -84,22 +93,34 @@ export default function ShampooRoomList() {
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {FILTER_TABS.map((tab) => {
             const selected = filterTab === tab.value;
+            const isRegionTab = tab.value === 'REGION';
+            const showRegionClear = isRegionTab && hasSelectedRegion;
 
             return (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => handleFilterTabClick(tab.value)}
-                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border-default bg-white px-3 py-1.5 typo-body-3-medium ${
-                  selected ? 'text-label-default' : 'text-label-info'
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 typo-body-3-medium transition-colors ${
+                  selected
+                    ? 'bg-label-default border-label-default text-white'
+                    : 'bg-white border-border-default text-label-info'
                 }`}
               >
-                <tab.icon
-                  className={`size-4 ${
-                    tab.iconClassName ?? (selected ? 'fill-label-default' : 'fill-label-info')
-                  }`}
-                />
+                {!showRegionClear && (
+                  <tab.icon className={`size-4 ${tab.iconClassName ?? 'fill-label-info'}`} />
+                )}
                 {tab.value === 'REGION' ? selectedRegionLabel : tab.label}
+                {showRegionClear && (
+                  <CloseIcon
+                    className="size-4 pl-1 fill-label-placeholder"
+                    onClick={(e: MouseEvent<SVGSVGElement>) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleClearSelectedRegion();
+                    }}
+                  />
+                )}
               </button>
             );
           })}
@@ -127,13 +148,18 @@ export default function ShampooRoomList() {
               </div>
             ))}
             {isFetchingNextPage && (
-              <div className="p-4 text-center typo-body-2-regular text-label-info">불러오는 중...</div>
+              <div className="p-4 text-center typo-body-2-regular text-label-info">
+                불러오는 중...
+              </div>
             )}
           </div>
         )}
       </div>
 
-      <ShampooRoomWritePostButton className="fixed right-5 bottom-5" onClick={handleWritePostClick} />
+      <ShampooRoomWritePostButton
+        className="fixed right-5 bottom-5"
+        onClick={handleWritePostClick}
+      />
     </div>
   );
 }
