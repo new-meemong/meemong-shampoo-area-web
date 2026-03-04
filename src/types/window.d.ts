@@ -3,7 +3,9 @@ export {};
 declare global {
   interface Window {
     goAppRouter?: (path: string) => void;
-    GoAppRouter?: (path: string) => void;
+    GoAppRouter?: {
+      postMessage: (value: string) => void;
+    };
     closeWebview?: (message?: unknown) => void;
     GoBack?: {
       postMessage: (value: string) => void;

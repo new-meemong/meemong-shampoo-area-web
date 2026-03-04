@@ -1,13 +1,15 @@
 'use client';
 
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
+import type { ShampooRoomCategory, ShampooRoomListItem } from '@/entities/shampoo-room';
+import { createShampooRoomRead, createShampooRoomView, getShampooRooms } from '../api';
+import { normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
 import { useCallback, useMemo, useState } from 'react';
+import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 
+import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
-
-import { createShampooRoomRead, createShampooRoomView, getShampooRooms } from '../api';
-import type { ShampooRoomCategory, ShampooRoomListItem } from '@/entities/shampoo-room';
+import { useSearchParams } from 'next/navigation';
 
 export type CategoryTab = 'FREE' | 'POPULAR' | 'EDUCATION' | 'PRODUCT' | 'MARKET';
 export type FilterTab = 'NONE' | 'MINE' | 'COMMENTED' | 'LIKED' | 'REGION';
@@ -19,6 +21,8 @@ const categoryToApi = (category: CategoryTab): ShampooRoomCategory | undefined =
 
 export function useShampooRoomList() {
   const { push } = useRouterWithUser();
+  const searchParams = useSearchParams();
+  const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
 
   const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
   const [filterTab, setFilterTab] = useState<FilterTab>('NONE');
@@ -78,9 +82,16 @@ export function useShampooRoomList() {
       markView(post.id.toString()).catch(() => {});
       markRead(post.id.toString()).catch(() => {});
 
+      if (source === 'app') {
+        const opened = openInAppWebView(`/shampoo-area/posts/${post.id}`);
+        if (opened) {
+          return;
+        }
+      }
+
       push(`/posts/${post.id}`);
     },
-    [markRead, markView, push],
+    [markRead, markView, push, source],
   );
 
   const observerTargetIndex = posts.length <= 1 ? 0 : posts.length - 2;

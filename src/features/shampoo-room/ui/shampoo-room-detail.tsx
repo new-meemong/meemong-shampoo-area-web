@@ -1,19 +1,21 @@
 'use client';
 
+import type { ShampooRoomComment, ShampooRoomCommentReply } from '@/entities/shampoo-room';
+import { closeAppWebView, normalizeSource } from '@/shared/lib/app-bridge';
+
 import CommentIcon from '@/assets/icons/comment.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
 import MoreHorizontalIcon from '@/assets/icons/more-horizontal.svg';
+import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
 import ProfileIcon from '@/assets/icons/profile.svg';
 import ReplyIcon from '@/assets/icons/reply.svg';
+import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import ShareIcon from '@/assets/icons/share.svg';
-
 import { SiteHeader } from '@/shared/ui/site-header';
-import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import formatDateTime from '@/shared/lib/formatDateTime';
-import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
-
+import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
+import { useSearchParams } from 'next/navigation';
 import { useShampooRoomDetail } from '../model/use-shampoo-room-detail';
-import type { ShampooRoomComment, ShampooRoomCommentReply } from '@/entities/shampoo-room';
 
 type ShampooRoomDetailProps = {
   postId: string;
@@ -21,6 +23,8 @@ type ShampooRoomDetailProps = {
 
 export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const { back, push, replace } = useRouterWithUser();
+  const searchParams = useSearchParams();
+  const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
   const {
     detail,
     isLoading,
@@ -68,7 +72,9 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ProfileIcon className="size-8 rounded-6 bg-label-default" />
-            <p className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}>
+            <p
+              className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}
+            >
               {reply.isMine ? '글쓴이' : '익명'}
             </p>
           </div>
@@ -97,6 +103,14 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     return <div className="p-5 typo-body-2-regular text-label-info">불러오는 중...</div>;
   }
 
+  const handleBackClick = () => {
+    if (source === 'app') {
+      const closed = closeAppWebView('close');
+      if (closed) return;
+    }
+    back();
+  };
+
   const moreOptions = [
     { label: '수정하기', onClick: () => push(`/posts/edit/${detail.id}`) },
     {
@@ -117,7 +131,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
       <SiteHeader
         title="샴푸실"
         showBackButton
-        onBackClick={back}
+        onBackClick={handleBackClick}
         rightComponent={
           detail.isMine ? (
             <MoreOptionsMenu
@@ -136,15 +150,21 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             <div className="flex items-center gap-2">
               <ProfileIcon className="size-10 rounded-6 bg-label-default" />
               <div className="flex flex-col">
-                <p className={`typo-body-1-semibold ${detail.isMine ? 'text-negative-light' : 'text-label-default'}`}>
+                <p
+                  className={`typo-body-1-semibold ${detail.isMine ? 'text-negative-light' : 'text-label-default'}`}
+                >
                   {detail.isMine ? '글쓴이' : '익명'}
                 </p>
-                <p className="typo-body-3-regular text-label-info">{formatDateTime(detail.createdAt)}</p>
+                <p className="typo-body-3-regular text-label-info">
+                  {formatDateTime(detail.createdAt)}
+                </p>
               </div>
             </div>
           </div>
           <h1 className="mt-2 typo-title-3-semibold text-label-default">{detail.title}</h1>
-          <p className="mt-3 whitespace-pre-wrap typo-body-1-long-regular text-label-default">{detail.content}</p>
+          <p className="mt-3 whitespace-pre-wrap typo-body-1-long-regular text-label-default">
+            {detail.content}
+          </p>
 
           {detail.images.length > 0 && (
             <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-hide">
@@ -154,7 +174,11 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                   className="size-[140px] shrink-0 rounded-6 overflow-hidden border border-border-default"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.imageUrl} alt="게시글 이미지" className="size-full object-cover" />
+                  <img
+                    src={image.imageUrl}
+                    alt="게시글 이미지"
+                    className="size-full object-cover"
+                  />
                 </div>
               ))}
             </div>
@@ -169,10 +193,15 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
               detail.isLiked ? 'text-negative' : 'text-label-info'
             }`}
           >
-            <HeartIcon className={`size-5 ${detail.isLiked ? 'fill-negative-light' : 'fill-label-info'}`} />
+            <HeartIcon
+              className={`size-5 ${detail.isLiked ? 'fill-negative-light' : 'fill-label-info'}`}
+            />
             {detail.likeCount}
           </button>
-          <button type="button" className="inline-flex items-center gap-1 typo-body-2-medium text-label-info">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 typo-body-2-medium text-label-info"
+          >
             <CommentIcon className="size-5 fill-label-info" />
             {detail.commentCount}
           </button>
@@ -234,8 +263,12 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                     )}
                   </div>
                 </div>
-                <p className="mt-3 typo-body-1-long-regular text-label-default">{comment.content}</p>
-                <p className="mt-2 typo-body-3-regular text-label-info">{formatDateTime(comment.createdAt)}</p>
+                <p className="mt-3 typo-body-1-long-regular text-label-default">
+                  {comment.content}
+                </p>
+                <p className="mt-2 typo-body-3-regular text-label-info">
+                  {formatDateTime(comment.createdAt)}
+                </p>
                 {comment.replies.length > 0 && (
                   <div className="mt-3 flex flex-col gap-2">{comment.replies.map(renderReply)}</div>
                 )}
@@ -243,7 +276,9 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             ))
           )}
           {isFetchingNextPage && (
-            <div className="p-4 text-center typo-body-2-regular text-label-info">불러오는 중...</div>
+            <div className="p-4 text-center typo-body-2-regular text-label-info">
+              불러오는 중...
+            </div>
           )}
         </div>
       </div>
