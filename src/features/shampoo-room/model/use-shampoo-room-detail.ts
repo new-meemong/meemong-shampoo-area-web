@@ -1,10 +1,5 @@
 'use client';
 
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
-
 import {
   createShampooRoomComment,
   createShampooRoomLike,
@@ -17,6 +12,10 @@ import {
   getShampooRoomDetail,
   updateShampooRoomComment,
 } from '../api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
 
 const viewedPostIds = new Set<string>();
 const readPostIds = new Set<string>();
@@ -25,6 +24,8 @@ export function useShampooRoomDetail(postId: string) {
   const queryClient = useQueryClient();
 
   const [commentInput, setCommentInput] = useState('');
+  const [isCommentComposing, setIsCommentComposing] = useState(false);
+  const [isCommentInputLocked, setIsCommentInputLocked] = useState(false);
   const [replyTargetCommentId, setReplyTargetCommentId] = useState<number | null>(null);
   const [editTarget, setEditTarget] = useState<{ id: number; content: string } | null>(null);
 
@@ -33,7 +34,12 @@ export function useShampooRoomDetail(postId: string) {
     queryFn: () => getShampooRoomDetail(postId),
   });
 
-  const { data: commentsData, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const {
+    data: commentsData,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['shampoo-room-comments', postId],
     queryFn: ({ pageParam }) =>
       getShampooRoomComments(postId, {
@@ -140,19 +146,55 @@ export function useShampooRoomDetail(postId: string) {
     void markPostViewAndRead();
   }, [detail, markRead, markView, postId]);
 
+  const unlockCommentInput = useCallback(() => {
+    setTimeout(() => setIsCommentInputLocked(false), 120);
+  }, []);
+
+  const handleCommentInputChange = useCallback(
+    (value: string) => {
+      if (isCommentInputLocked) return;
+      setCommentInput(value);
+    },
+    [isCommentInputLocked],
+  );
+
+  const handleCommentCompositionStart = useCallback(() => {
+    setIsCommentComposing(true);
+  }, []);
+
+  const handleCommentCompositionEnd = useCallback(() => {
+    setIsCommentComposing(false);
+  }, []);
+
   const handleCommentSubmit = async () => {
+    if (isCommentInputLocked || isCommentComposing) return;
+
     const trimmed = commentInput.trim();
     if (!trimmed) return;
 
-    if (editTarget) {
-      await updateCommentMutation.mutateAsync({ id: editTarget.id, content: trimmed });
-      return;
+    const previousInput = commentInput;
+    setIsCommentInputLocked(true);
+    setCommentInput('');
+
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
     }
 
-    await createCommentMutation.mutateAsync({
-      content: trimmed,
-      ...(replyTargetCommentId ? { parentCommentId: replyTargetCommentId } : {}),
-    });
+    try {
+      if (editTarget) {
+        await updateCommentMutation.mutateAsync({ id: editTarget.id, content: trimmed });
+        return;
+      }
+
+      await createCommentMutation.mutateAsync({
+        content: trimmed,
+        ...(replyTargetCommentId ? { parentCommentId: replyTargetCommentId } : {}),
+      });
+    } catch {
+      setCommentInput(previousInput);
+    } finally {
+      unlockCommentInput();
+    }
   };
 
   return {
@@ -170,6 +212,11 @@ export function useShampooRoomDetail(postId: string) {
     updateCommentMutation,
     deleteCommentMutation,
     commentInput,
+    isCommentComposing,
+    isCommentInputLocked,
+    handleCommentInputChange,
+    handleCommentCompositionStart,
+    handleCommentCompositionEnd,
     setCommentInput,
     replyTargetCommentId,
     setReplyTargetCommentId,

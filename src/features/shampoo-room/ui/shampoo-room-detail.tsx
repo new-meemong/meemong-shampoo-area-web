@@ -39,6 +39,11 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     updateCommentMutation,
     deleteCommentMutation,
     commentInput,
+    isCommentComposing,
+    isCommentInputLocked,
+    handleCommentInputChange,
+    handleCommentCompositionStart,
+    handleCommentCompositionEnd,
     setCommentInput,
     replyTargetCommentId,
     setReplyTargetCommentId,
@@ -315,14 +320,21 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
         <div className="flex gap-2">
           <input
             value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
+            onChange={(e) => handleCommentInputChange(e.target.value)}
+            onCompositionStart={handleCommentCompositionStart}
+            onCompositionEnd={handleCommentCompositionEnd}
             placeholder="댓글을 입력하세요"
             className="flex-1 rounded-6 border border-border-default px-3 py-2 typo-body-2-regular focus:outline-none focus:border-border-default"
           />
           <button
             type="button"
             onClick={handleCommentSubmit}
-            disabled={createCommentMutation.isPending || updateCommentMutation.isPending}
+            disabled={
+              createCommentMutation.isPending ||
+              updateCommentMutation.isPending ||
+              isCommentComposing ||
+              isCommentInputLocked
+            }
             className="rounded-6 bg-label-default text-white px-4 typo-body-2-medium disabled:opacity-40"
           >
             등록

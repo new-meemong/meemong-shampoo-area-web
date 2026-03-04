@@ -29,19 +29,19 @@ export const SiteHeader = ({
   };
 
   return (
-    <header className="flex items-center border-b border-border-default p-5">
+    <header className="flex h-[50px] items-center border-b border-border-default px-4">
       {showBackButton ? (
         /* 백버튼이 있는 헤더 디자인 (가운데 정렬 제목) */
         <div className="flex items-center justify-between w-full">
           <button
             onClick={handleBackClick}
             aria-label="뒤로 가기"
-            className="size-10 rounded-4 flex items-center justify-center"
+            className="size-8 rounded-4 flex items-center justify-center"
           >
             <ChevronLeftIcon className="size-7 fill-label-info" />
           </button>
           <h1 className="typo-title-3-semibold flex-1 text-center">{title}</h1>
-          {rightComponent ? rightComponent : <div className="w-7" />}
+          {rightComponent ? rightComponent : <div className="w-8" />}
         </div>
       ) : (
         /* 메인 페이지 헤더 디자인 (좌측 정렬 제목) */
