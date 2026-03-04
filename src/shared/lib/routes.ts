@@ -2,6 +2,7 @@ export const ROUTES = {
   HOME: '/',
   POSTS: '/posts',
   POSTS_CREATE: '/posts/create',
+  POSTS_SELECT_REGION: '/posts/select-region',
   POSTS_DETAIL: (postId: string | number) => `/posts/${postId}`,
   POSTS_EDIT: (id: string) => `/posts/edit/${id}`,
 } as const;

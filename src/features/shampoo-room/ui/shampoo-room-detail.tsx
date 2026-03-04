@@ -1,7 +1,7 @@
 'use client';
 
 import type { ShampooRoomComment, ShampooRoomCommentReply } from '@/entities/shampoo-room';
-import { closeAppWebView, normalizeSource } from '@/shared/lib/app-bridge';
+import { closeAppWebView, normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
 
 import CommentIcon from '@/assets/icons/comment.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
@@ -111,8 +111,17 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     back();
   };
 
+  const handleEditPostClick = () => {
+    if (source === 'app') {
+      const opened = openInAppWebView(`/shampoo-area/posts/edit/${detail.id}`);
+      if (opened) return;
+    }
+
+    push(`/posts/edit/${detail.id}`);
+  };
+
   const moreOptions = [
-    { label: '수정하기', onClick: () => push(`/posts/edit/${detail.id}`) },
+    { label: '수정하기', onClick: handleEditPostClick },
     {
       label: '삭제하기',
       onClick: () => {

@@ -1,0 +1,75 @@
+import { cn, Separator } from '@/shared';
+import type { SelectedRegion } from '@/shared/lib/auth';
+
+import { REGION_KEYS } from '../../constants/region';
+
+function RegionTab({
+  label,
+  value,
+  onChange,
+  selected,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  selected: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        'w-full px-5 py-4 text-label-default text-left',
+        selected ? 'typo-body-1-semibold bg-alternative' : 'typo-body-1-regular bg-white',
+      )}
+      onClick={() => onChange(value)}
+    >
+      {label}
+    </button>
+  );
+}
+
+type RegionTabsProps = {
+  regionKey: string;
+  regionOptions: string[];
+  selectedRegion: SelectedRegion | null;
+  onSelectKey: (key: string) => void;
+  onSelectValue: (value: string) => void;
+};
+
+export default function RegionTabs({
+  regionKey,
+  regionOptions,
+  selectedRegion,
+  onSelectKey,
+  onSelectValue,
+}: RegionTabsProps) {
+  return (
+    <div className="h-full">
+      <div className="flex h-full">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          {REGION_KEYS.map((region) => (
+            <RegionTab
+              key={region}
+              label={region}
+              value={region}
+              onChange={onSelectKey}
+              selected={selectedRegion?.key === region}
+            />
+          ))}
+        </div>
+        <Separator orientation="vertical" />
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          {regionOptions.map((value, index) => (
+            <RegionTab
+              key={value}
+              label={index === 0 ? `${regionKey} ${value}` : value}
+              value={value}
+              onChange={onSelectValue}
+              selected={selectedRegion?.values.includes(value) ?? false}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -49,9 +49,8 @@ export default function ShampooRoomList() {
     categoryTab,
     setCategoryTab,
     filterTab,
-    setFilterTab,
-    regionInput,
-    setRegionInput,
+    selectedRegionLabel,
+    handleFilterTabClick,
     posts,
     isLoading,
     isFetchingNextPage,
@@ -59,7 +58,7 @@ export default function ShampooRoomList() {
     observerRef,
     observerTargetIndex,
     handlePostClick,
-    push,
+    handleWritePostClick,
   } = useShampooRoomList();
 
   return (
@@ -90,7 +89,7 @@ export default function ShampooRoomList() {
               <button
                 key={tab.value}
                 type="button"
-                onClick={() => setFilterTab(selected ? 'NONE' : tab.value)}
+                onClick={() => handleFilterTabClick(tab.value)}
                 className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border-default bg-white px-3 py-1.5 typo-body-3-medium ${
                   selected ? 'text-label-default' : 'text-label-info'
                 }`}
@@ -100,20 +99,11 @@ export default function ShampooRoomList() {
                     tab.iconClassName ?? (selected ? 'fill-label-default' : 'fill-label-info')
                   }`}
                 />
-                {tab.label}
+                {tab.value === 'REGION' ? selectedRegionLabel : tab.label}
               </button>
             );
           })}
         </div>
-
-        {filterTab === 'REGION' && (
-          <input
-            value={regionInput}
-            onChange={(e) => setRegionInput(e.target.value)}
-            className="mt-2 w-full rounded-8 border border-border-default px-3 py-2 typo-body-2-regular"
-            placeholder="지역 입력 (예: 서울, 경기도 성남시)"
-          />
-        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -143,7 +133,7 @@ export default function ShampooRoomList() {
         )}
       </div>
 
-      <ShampooRoomWritePostButton className="fixed right-5 bottom-5" onClick={() => push('/posts/create')} />
+      <ShampooRoomWritePostButton className="fixed right-5 bottom-5" onClick={handleWritePostClick} />
     </div>
   );
 }

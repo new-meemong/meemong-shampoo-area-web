@@ -3,13 +3,15 @@
 import type { ShampooRoomCategory, ShampooRoomListItem } from '@/entities/shampoo-room';
 import { createShampooRoomRead, createShampooRoomView, getShampooRooms } from '../api';
 import { normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 
+import { ROUTES } from '@/shared';
 import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useSearchParams } from 'next/navigation';
+import useSelectedRegion, { convertSelectedRegionToAddresses, getSelectedRegionLabel } from './use-selected-region';
 
 export type CategoryTab = 'FREE' | 'POPULAR' | 'EDUCATION' | 'PRODUCT' | 'MARKET';
 export type FilterTab = 'NONE' | 'MINE' | 'COMMENTED' | 'LIKED' | 'REGION';
@@ -23,21 +25,55 @@ export function useShampooRoomList() {
   const { push } = useRouterWithUser();
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
+  const { userSelectedRegionData } = useSelectedRegion();
 
   const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
   const [filterTab, setFilterTab] = useState<FilterTab>('NONE');
-  const [regionInput, setRegionInput] = useState('');
 
   const { mutateAsync: markView } = useMutation({ mutationFn: createShampooRoomView });
   const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
 
+  useEffect(() => {
+    if (!userSelectedRegionData) {
+      setFilterTab((prev) => (prev === 'REGION' ? 'NONE' : prev));
+      return;
+    }
+
+    setFilterTab((prev) => (prev === 'NONE' ? 'REGION' : prev));
+  }, [userSelectedRegionData]);
+
   const addresses = useMemo(() => {
     if (filterTab !== 'REGION') return undefined;
-    return regionInput
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
-  }, [filterTab, regionInput]);
+    return convertSelectedRegionToAddresses(userSelectedRegionData);
+  }, [filterTab, userSelectedRegionData]);
+
+  const selectedRegionLabel = useMemo(
+    () => getSelectedRegionLabel(userSelectedRegionData),
+    [userSelectedRegionData],
+  );
+
+  const handleFilterTabClick = useCallback(
+    (tab: FilterTab) => {
+      if (tab === 'REGION') {
+        push(ROUTES.POSTS_SELECT_REGION);
+        return;
+      }
+
+      setFilterTab((prev) => (prev === tab ? 'NONE' : tab));
+    },
+    [push],
+  );
+
+  const handleWritePostClick = useCallback(() => {
+    if (source === 'app') {
+      const opened = openInAppWebView('/shampoo-area/posts/create');
+      if (opened) {
+        return;
+      }
+    }
+
+    push('/posts/create');
+  }, [push, source]);
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['shampoo-rooms', categoryTab, filterTab, addresses?.join(',')],
@@ -100,9 +136,8 @@ export function useShampooRoomList() {
     categoryTab,
     setCategoryTab,
     filterTab,
-    setFilterTab,
-    regionInput,
-    setRegionInput,
+    selectedRegionLabel,
+    handleFilterTabClick,
     posts,
     isLoading,
     isFetchingNextPage,
@@ -110,6 +145,7 @@ export function useShampooRoomList() {
     observerRef,
     observerTargetIndex,
     handlePostClick,
+    handleWritePostClick,
     push,
   };
 }
