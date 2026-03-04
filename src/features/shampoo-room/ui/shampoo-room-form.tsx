@@ -1,6 +1,7 @@
 'use client';
 
 import { closeAppWebView, normalizeSource } from '@/shared/lib/app-bridge';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/shared';
 import GalleryIcon from '@/assets/icons/gallery.svg';
@@ -25,6 +26,7 @@ type ShampooRoomFormProps = {
 export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
+  const [initialHeight] = useState(() => window.innerHeight);
   const {
     isEdit,
     back,
@@ -53,15 +55,51 @@ export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
     back();
   };
 
+  useEffect(() => {
+    if (source !== 'app') return;
+
+    const lockWindowScroll = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      const isTextInput =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target.isContentEditable;
+
+      if (!isTextInput) return;
+
+      requestAnimationFrame(lockWindowScroll);
+      setTimeout(lockWindowScroll, 50);
+    };
+
+    window.visualViewport?.addEventListener('resize', lockWindowScroll);
+    window.addEventListener('focusin', handleFocusIn);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', lockWindowScroll);
+      window.removeEventListener('focusin', handleFocusIn);
+    };
+  }, [source]);
+
   return (
-    <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">
+    <div
+      className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col min-h-0 overflow-hidden"
+      style={{ minHeight: initialHeight }}
+    >
       <SiteHeader
         title={isEdit ? '게시글 수정' : '글쓰기'}
         showBackButton
         onBackClick={handleBackClick}
       />
 
-      <div className="flex-1 min-h-0 px-5 pt-5 pb-4 flex flex-col gap-5 overflow-hidden">
+      <div className="flex-1 min-h-0 px-5 pt-5 pb-4 flex flex-col gap-5 overflow-y-auto">
         <div>
           <input
             value={title}
