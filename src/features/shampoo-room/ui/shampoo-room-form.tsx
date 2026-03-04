@@ -1,13 +1,15 @@
 'use client';
 
-import GalleryIcon from '@/assets/icons/gallery.svg';
-import { XIcon } from 'lucide-react';
+import { closeAppWebView, normalizeSource } from '@/shared/lib/app-bridge';
 
 import { Button } from '@/shared';
-import { SiteHeader } from '@/shared/ui/site-header';
-
-import { useShampooRoomForm } from '../model/use-shampoo-room-form';
+import GalleryIcon from '@/assets/icons/gallery.svg';
+import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import type { ShampooRoomCategory } from '@/entities/shampoo-room';
+import { SiteHeader } from '@/shared/ui/site-header';
+import { XIcon } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useShampooRoomForm } from '../model/use-shampoo-room-form';
 
 const CATEGORY_OPTIONS: Array<{ label: string; value: ShampooRoomCategory }> = [
   { label: '자유글', value: 'FREE' },
@@ -21,6 +23,8 @@ type ShampooRoomFormProps = {
 };
 
 export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
+  const searchParams = useSearchParams();
+  const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
   const {
     isEdit,
     back,
@@ -40,9 +44,22 @@ export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
     handleImageRemove,
   } = useShampooRoomForm(postId);
 
+  const handleBackClick = () => {
+    if (source === 'app') {
+      const closed = closeAppWebView('close');
+      if (closed) return;
+    }
+
+    back();
+  };
+
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">
-      <SiteHeader title={isEdit ? '게시글 수정' : '글쓰기'} showBackButton onBackClick={back} />
+      <SiteHeader
+        title={isEdit ? '게시글 수정' : '글쓰기'}
+        showBackButton
+        onBackClick={handleBackClick}
+      />
 
       <div className="flex-1 min-h-0 px-5 pt-5 pb-4 flex flex-col gap-5 overflow-hidden">
         <div>
@@ -116,7 +133,13 @@ export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
           aria-label={`이미지 업로드 (${existingImageUrls.length + newImageFiles.length}/10)`}
         >
           <GalleryIcon className="size-6 fill-white" />
-          <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </label>
         <button
           type="button"
