@@ -102,8 +102,12 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             />
           )}
         </div>
+        {reply.isSecret && <p className="typo-body-3-medium text-label-info">비밀댓글</p>}
         <p className="typo-body-1-long-regular text-label-default">{reply.content}</p>
-        <p className="typo-body-3-regular text-label-info">{formatDateTime(reply.createdAt)}</p>
+        <p className="typo-body-3-regular text-label-info">
+          {formatDateTime(reply.createdAt)}
+          {reply.isEdited ? ' · 수정됨' : ''}
+        </p>
       </div>
     </div>
   );
@@ -170,6 +174,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                 </p>
                 <p className="typo-body-3-regular text-label-info">
                   {formatDateTime(detail.createdAt)}
+                  {detail.isEdited ? ' · 수정됨' : ''}
                 </p>
               </div>
             </div>
@@ -276,11 +281,15 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                     )}
                   </div>
                 </div>
+                {comment.isSecret && (
+                  <p className="mt-2 typo-body-3-medium text-label-info">비밀댓글</p>
+                )}
                 <p className="mt-3 typo-body-1-long-regular text-label-default">
                   {comment.content}
                 </p>
                 <p className="mt-2 typo-body-3-regular text-label-info">
                   {formatDateTime(comment.createdAt)}
+                  {comment.isEdited ? ' · 수정됨' : ''}
                 </p>
                 {comment.replies.length > 0 && (
                   <div className="mt-3 flex flex-col gap-2">{comment.replies.map(renderReply)}</div>

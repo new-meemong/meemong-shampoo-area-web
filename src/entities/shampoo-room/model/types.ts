@@ -27,6 +27,7 @@ export type ShampooRoomListItem = {
 };
 
 export type ShampooRoomDetail = ShampooRoomListItem & {
+  isEdited: boolean;
   isLiked: boolean;
   isRead: boolean;
 };
@@ -35,6 +36,7 @@ export type ShampooRoomCommentReply = {
   id: number;
   content: string;
   isSecret: boolean;
+  isEdited: boolean;
   createdAt: string;
   updatedAt: string;
   isMine: boolean;
@@ -45,6 +47,7 @@ export type ShampooRoomComment = {
   id: number;
   content: string;
   isSecret: boolean;
+  isEdited: boolean;
   createdAt: string;
   updatedAt: string;
   isMine: boolean;
