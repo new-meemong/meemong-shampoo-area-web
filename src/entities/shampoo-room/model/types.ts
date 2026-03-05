@@ -7,6 +7,8 @@ export type ShampooRoomImage = {
 export type ShampooRoomUser = {
   name: string;
   anonymousNumber: number;
+  address?: string;
+  address2?: string;
 };
 
 export type ShampooRoomListItem = {
@@ -54,8 +56,10 @@ export type ShampooRoomListQuery = {
   __nextCursor?: string;
   __limit?: number;
   isMine?: boolean;
+  isMineComment?: boolean;
   isLiked?: boolean;
   isRead?: boolean;
+  isPopular?: boolean;
   category?: ShampooRoomCategory;
   addresses?: string[];
 };

@@ -1,7 +1,7 @@
 import type { HTTPError, SearchParamsOption } from 'ky';
-import ky from 'ky';
 
 import { getToken } from '../lib/auth';
+import ky from 'ky';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -40,7 +40,7 @@ const createApiInstance = () => {
           if (!token) return;
 
           request.headers.set('Authorization', `${token}`);
-          request.headers.set('platform', 'HAIR_CONSULTING_WEB');
+          request.headers.set('platform', 'SHAMPOO_ROOM_WEB');
           request.headers.set('web-version', '1.1.1');
         },
         // Request 로깅
@@ -200,7 +200,7 @@ const createApiInstanceWithoutAuth = () => {
     hooks: {
       beforeRequest: [
         (request) => {
-          request.headers.set('platform', 'HAIR_CONSULTING_WEB');
+          request.headers.set('platform', 'SHAMPOO_ROOM_WEB');
           request.headers.set('web-version', '1.1.1');
         },
         // Request 로깅

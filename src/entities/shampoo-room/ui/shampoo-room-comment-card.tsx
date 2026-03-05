@@ -1,5 +1,6 @@
 import ProfileIcon from '@/assets/icons/profile.svg';
 
+import getAnonymousDisplayName from '../lib/get-anonymous-display-name';
 import type { ShampooRoomComment, ShampooRoomCommentReply } from '../model/types';
 
 type ShampooRoomCommentCardProps = {
@@ -12,7 +13,9 @@ export default function ShampooRoomCommentCard({ comment, formattedDate }: Shamp
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <ProfileIcon className="size-8 rounded-6 bg-label-default" />
-        <p className="typo-body-1-semibold text-label-default">익명</p>
+        <p className="typo-body-1-semibold text-label-default">
+          {getAnonymousDisplayName(comment.user)}
+        </p>
       </div>
       <p className="typo-body-1-long-regular text-label-default">{comment.content}</p>
       <p className="typo-body-3-regular text-label-info">{formattedDate}</p>

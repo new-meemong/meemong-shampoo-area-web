@@ -1,6 +1,10 @@
 'use client';
 
-import type { ShampooRoomComment, ShampooRoomCommentReply } from '@/entities/shampoo-room';
+import {
+  getAnonymousDisplayName,
+  type ShampooRoomComment,
+  type ShampooRoomCommentReply,
+} from '@/entities/shampoo-room';
 import { closeAppWebView, normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
 
 import CommentIcon from '@/assets/icons/comment.svg';
@@ -80,7 +84,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             <p
               className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}
             >
-              {reply.isMine ? '글쓴이' : '익명'}
+              {getAnonymousDisplayName(reply.user)}
             </p>
           </div>
           {reply.isMine && (
@@ -167,7 +171,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                 <p
                   className={`typo-body-1-semibold ${detail.isMine ? 'text-negative-light' : 'text-label-default'}`}
                 >
-                  {detail.isMine ? '글쓴이' : '익명'}
+                  {getAnonymousDisplayName(detail.user)}
                 </p>
                 <p className="typo-body-3-regular text-label-info">
                   {formatDateTime(detail.createdAt)}
@@ -246,7 +250,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                     <p
                       className={`typo-body-1-semibold ${comment.isMine ? 'text-negative-light' : 'text-label-default'}`}
                     >
-                      {comment.isMine ? '글쓴이' : '익명'}
+                      {getAnonymousDisplayName(comment.user)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5">

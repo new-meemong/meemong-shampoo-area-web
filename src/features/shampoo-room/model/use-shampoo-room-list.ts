@@ -96,24 +96,17 @@ export function useShampooRoomList() {
         __nextCursor: pageParam,
         __limit: 20,
         category: categoryToApi(categoryTab),
+        isPopular: categoryTab === 'POPULAR' ? true : undefined,
         isMine: filterTab === 'MINE' ? true : undefined,
+        isMineComment: filterTab === 'COMMENTED' ? true : undefined,
         isLiked: filterTab === 'LIKED' ? true : undefined,
-        isRead: filterTab === 'COMMENTED' ? true : undefined,
         addresses,
       }),
     getNextPageParam: (lastPage) => lastPage.__nextCursor,
     initialPageParam: undefined as string | undefined,
   });
 
-  const posts = useMemo(() => {
-    const allPosts = data?.pages.flatMap((page) => page.dataList) ?? [];
-
-    if (categoryTab === 'POPULAR') {
-      return [...allPosts].sort((a, b) => b.likeCount - a.likeCount);
-    }
-
-    return allPosts;
-  }, [categoryTab, data?.pages]);
+  const posts = useMemo(() => data?.pages.flatMap((page) => page.dataList) ?? [], [data?.pages]);
 
   const handleFetchNextPage = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
