@@ -5,7 +5,7 @@ import {
   type ShampooRoomComment,
   type ShampooRoomCommentReply,
 } from '@/entities/shampoo-room';
-import { closeAppWebView, normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
+import { closeAppWebView, normalizeSource } from '@/shared/lib/app-bridge';
 
 import CommentIcon from '@/assets/icons/comment.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
@@ -121,11 +121,6 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   };
 
   const handleEditPostClick = () => {
-    if (source === 'app') {
-      const opened = openInAppWebView(`/shampoo-area/posts/edit/${detail.id}`);
-      if (opened) return;
-    }
-
     push(`/posts/edit/${detail.id}`);
   };
 
