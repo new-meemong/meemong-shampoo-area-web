@@ -47,7 +47,7 @@ export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
   } = useShampooRoomForm(postId);
 
   const handleBackClick = () => {
-    if (source === 'app') {
+    if (source === 'app' && !isEdit) {
       const closed = closeAppWebView('close');
       if (closed) return;
     }
