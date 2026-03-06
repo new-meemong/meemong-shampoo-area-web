@@ -91,28 +91,11 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     setReplyTargetCommentId(null);
   };
 
-  const getVisibleCommentContent = (comment: ShampooRoomComment) => {
-    const canViewSecret = !!detail?.isMine || comment.isMine;
+  const canViewCommentContent = (comment: ShampooRoomComment) =>
+    !comment.isSecret || !!detail?.isMine || comment.isMine;
 
-    if (comment.isSecret && !canViewSecret) {
-      return '비밀댓글입니다.';
-    }
-
-    return comment.content;
-  };
-
-  const getVisibleReplyContent = (
-    reply: ShampooRoomCommentReply,
-    parentComment: ShampooRoomComment,
-  ) => {
-    const canViewSecret = !!detail?.isMine || parentComment.isMine || reply.isMine;
-
-    if (reply.isSecret && !canViewSecret) {
-      return '비밀댓글입니다.';
-    }
-
-    return reply.content;
-  };
+  const canViewReplyContent = (reply: ShampooRoomCommentReply, parentComment: ShampooRoomComment) =>
+    !reply.isSecret || !!detail?.isMine || parentComment.isMine || reply.isMine;
 
   const canReplyToComment = (comment: ShampooRoomComment) => {
     if (!comment.isSecret) return true;
@@ -135,40 +118,48 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const renderReply = (reply: ShampooRoomCommentReply, parentComment: ShampooRoomComment) => (
     <div key={reply.id} className="flex gap-3 p-5 bg-alternative rounded-6">
       <ReplyIcon className="size-4.5 fill-label-strong shrink-0 mt-1" />
-      <div className="flex flex-1 flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <ProfileIcon className="size-8 rounded-6 bg-label-default" />
-            <p
-              className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}
-            >
-              {getDisplayName(getAnonymousDisplayName(reply.user))}
-            </p>
-            {reply.isSecret && <LockIcon className="size-3.5 fill-label-placeholder" />}
+      {!canViewReplyContent(reply, parentComment) ? (
+        <div className="flex flex-1 items-center justify-between gap-3">
+          <div className="flex items-center gap-1">
+            <p className="typo-body-2-regular text-label-info">비밀댓글입니다</p>
+            <LockIcon className="size-3.5 fill-label-placeholder" />
           </div>
-          {!isSharedView && reply.isMine && (
-            <MoreOptionsMenu
-              trigger={<MoreHorizontalIcon className="size-6" />}
-              options={[
-                { label: '수정하기', onClick: () => startEditComment(reply) },
-                {
-                  label: '삭제하기',
-                  onClick: () => deleteCommentMutation.mutate(reply.id),
-                  className: 'text-negative',
-                },
-              ]}
-              contentClassName="-right-[14px]"
-            />
-          )}
+          <p className="typo-body-3-regular text-label-info">{formatDateTime(reply.createdAt)}</p>
         </div>
-        <p className="typo-body-1-long-regular text-label-default">
-          {getVisibleReplyContent(reply, parentComment)}
-        </p>
-        <p className="typo-body-3-regular text-label-info">
-          {formatDateTime(reply.createdAt)}
-          {reply.isEdited ? ' · 수정됨' : ''}
-        </p>
-      </div>
+      ) : (
+        <div className="flex flex-1 flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ProfileIcon className="size-8 rounded-6 bg-label-default" />
+              <p
+                className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}
+              >
+                {getDisplayName(getAnonymousDisplayName(reply.user))}
+              </p>
+              {reply.isSecret && <LockIcon className="size-3.5 fill-label-placeholder" />}
+            </div>
+            {!isSharedView && reply.isMine && (
+              <MoreOptionsMenu
+                trigger={<MoreHorizontalIcon className="size-6" />}
+                options={[
+                  { label: '수정하기', onClick: () => startEditComment(reply) },
+                  {
+                    label: '삭제하기',
+                    onClick: () => deleteCommentMutation.mutate(reply.id),
+                    className: 'text-negative',
+                  },
+                ]}
+                contentClassName="-right-[14px]"
+              />
+            )}
+          </div>
+          <p className="typo-body-1-long-regular text-label-default">{reply.content}</p>
+          <p className="typo-body-3-regular text-label-info">
+            {formatDateTime(reply.createdAt)}
+            {reply.isEdited ? ' · 수정됨' : ''}
+          </p>
+        </div>
+      )}
     </div>
   );
 
@@ -306,54 +297,70 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                 ref={hasNextPage && index === observerTargetIndex ? observerRef : undefined}
                 className="p-5 border-b border-border-default"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ProfileIcon className="size-8 rounded-6 bg-label-default" />
-                    <p
-                      className={`typo-body-1-semibold ${comment.isMine ? 'text-negative-light' : 'text-label-default'}`}
-                    >
-                      {getDisplayName(getAnonymousDisplayName(comment.user))}
+                {canViewCommentContent(comment) ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ProfileIcon className="size-8 rounded-6 bg-label-default" />
+                        <p
+                          className={`typo-body-1-semibold ${comment.isMine ? 'text-negative-light' : 'text-label-default'}`}
+                        >
+                          {getDisplayName(getAnonymousDisplayName(comment.user))}
+                        </p>
+                        {comment.isSecret && (
+                          <LockIcon className="size-3.5 fill-label-placeholder" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {!isSharedView && canReplyToComment(comment) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyTargetCommentId(comment.id);
+                              setEditTarget(null);
+                              setIsSecretComment(false);
+                              setCommentInput('');
+                            }}
+                            className="typo-body-2-medium text-label-info"
+                          >
+                            답글
+                          </button>
+                        )}
+                        {!isSharedView && comment.isMine && (
+                          <MoreOptionsMenu
+                            trigger={<MoreHorizontalIcon className="size-6" />}
+                            options={[
+                              { label: '수정하기', onClick: () => startEditComment(comment) },
+                              {
+                                label: '삭제하기',
+                                onClick: () => deleteCommentMutation.mutate(comment.id),
+                                className: 'text-negative',
+                              },
+                            ]}
+                            contentClassName="-right-[14px]"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <p className="mt-3 typo-body-1-long-regular text-label-default">
+                      {comment.content}
                     </p>
-                    {comment.isSecret && <LockIcon className="size-3.5 fill-label-placeholder" />}
+                    <p className="mt-2 typo-body-3-regular text-label-info">
+                      {formatDateTime(comment.createdAt)}
+                      {comment.isEdited ? ' · 수정됨' : ''}
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1">
+                      <p className="typo-body-2-regular text-label-info">비밀댓글입니다</p>
+                      <LockIcon className="size-3.5 fill-label-placeholder" />
+                    </div>
+                    <p className="typo-body-3-regular text-label-info">
+                      {formatDateTime(comment.createdAt)}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    {!isSharedView && canReplyToComment(comment) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setReplyTargetCommentId(comment.id);
-                          setEditTarget(null);
-                          setIsSecretComment(false);
-                          setCommentInput('');
-                        }}
-                        className="typo-body-2-medium text-label-info"
-                      >
-                        답글
-                      </button>
-                    )}
-                    {!isSharedView && comment.isMine && (
-                      <MoreOptionsMenu
-                        trigger={<MoreHorizontalIcon className="size-6" />}
-                        options={[
-                          { label: '수정하기', onClick: () => startEditComment(comment) },
-                          {
-                            label: '삭제하기',
-                            onClick: () => deleteCommentMutation.mutate(comment.id),
-                            className: 'text-negative',
-                          },
-                        ]}
-                        contentClassName="-right-[14px]"
-                      />
-                    )}
-                  </div>
-                </div>
-                <p className="mt-3 typo-body-1-long-regular text-label-default">
-                  {getVisibleCommentContent(comment)}
-                </p>
-                <p className="mt-2 typo-body-3-regular text-label-info">
-                  {formatDateTime(comment.createdAt)}
-                  {comment.isEdited ? ' · 수정됨' : ''}
-                </p>
+                )}
                 {comment.replies.length > 0 && (
                   <div className="mt-3 flex flex-col gap-2">
                     {comment.replies.map((reply) => renderReply(reply, comment))}
