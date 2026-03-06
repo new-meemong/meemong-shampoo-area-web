@@ -20,7 +20,8 @@ import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observe
 const viewedPostIds = new Set<string>();
 const readPostIds = new Set<string>();
 
-export function useShampooRoomDetail(postId: string) {
+export function useShampooRoomDetail(postId: string, options?: { isSharedView?: boolean }) {
+  const isSharedView = options?.isSharedView ?? false;
   const queryClient = useQueryClient();
 
   const [commentInput, setCommentInput] = useState('');
@@ -28,6 +29,7 @@ export function useShampooRoomDetail(postId: string) {
   const [isCommentInputLocked, setIsCommentInputLocked] = useState(false);
   const [replyTargetCommentId, setReplyTargetCommentId] = useState<number | null>(null);
   const [editTarget, setEditTarget] = useState<{ id: number; content: string } | null>(null);
+  const [isSecretComment, setIsSecretComment] = useState(false);
 
   const { data: detail, isLoading } = useQuery({
     queryKey: ['shampoo-room-detail', postId],
@@ -91,11 +93,12 @@ export function useShampooRoomDetail(postId: string) {
   });
 
   const createCommentMutation = useMutation({
-    mutationFn: (payload: { content: string; parentCommentId?: number }) =>
+    mutationFn: (payload: { content: string; parentCommentId?: number; isSecret?: boolean }) =>
       createShampooRoomComment(postId, payload),
     onSuccess: () => {
       setCommentInput('');
       setReplyTargetCommentId(null);
+      setIsSecretComment(false);
       queryClient.invalidateQueries({ queryKey: ['shampoo-room-comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] });
       queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
@@ -103,10 +106,14 @@ export function useShampooRoomDetail(postId: string) {
   });
 
   const updateCommentMutation = useMutation({
-    mutationFn: (payload: { id: number; content: string }) =>
-      updateShampooRoomComment(postId, payload.id, { content: payload.content }),
+    mutationFn: (payload: { id: number; content: string; isSecret?: boolean }) =>
+      updateShampooRoomComment(postId, payload.id, {
+        content: payload.content,
+        isSecret: payload.isSecret,
+      }),
     onSuccess: () => {
       setEditTarget(null);
+      setIsSecretComment(false);
       queryClient.invalidateQueries({ queryKey: ['shampoo-room-comments', postId] });
     },
   });
@@ -121,6 +128,7 @@ export function useShampooRoomDetail(postId: string) {
   });
 
   useEffect(() => {
+    if (isSharedView) return;
     if (!detail) return;
 
     const markPostViewAndRead = async () => {
@@ -144,7 +152,7 @@ export function useShampooRoomDetail(postId: string) {
     };
 
     void markPostViewAndRead();
-  }, [detail, markRead, markView, postId]);
+  }, [detail, isSharedView, markRead, markView, postId]);
 
   const unlockCommentInput = useCallback(() => {
     setTimeout(() => setIsCommentInputLocked(false), 120);
@@ -182,13 +190,18 @@ export function useShampooRoomDetail(postId: string) {
 
     try {
       if (editTarget) {
-        await updateCommentMutation.mutateAsync({ id: editTarget.id, content: trimmed });
+        await updateCommentMutation.mutateAsync({
+          id: editTarget.id,
+          content: trimmed,
+          isSecret: isSecretComment,
+        });
         return;
       }
 
       await createCommentMutation.mutateAsync({
         content: trimmed,
         ...(replyTargetCommentId ? { parentCommentId: replyTargetCommentId } : {}),
+        isSecret: isSecretComment,
       });
     } catch {
       setCommentInput(previousInput);
@@ -214,6 +227,8 @@ export function useShampooRoomDetail(postId: string) {
     commentInput,
     isCommentComposing,
     isCommentInputLocked,
+    isSecretComment,
+    setIsSecretComment,
     handleCommentInputChange,
     handleCommentCompositionStart,
     handleCommentCompositionEnd,

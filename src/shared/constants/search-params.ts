@@ -6,4 +6,5 @@ export const SEARCH_PARAMS = {
   POST_LIST_TAB: 'postListTab',
   POST_WRITER_SEX: 'postWriterSex',
   SOURCE: 'source',
+  VIEW: 'view',
 } as const;

@@ -10,6 +10,8 @@ import { closeAppWebView, normalizeSource } from '@/shared/lib/app-bridge';
 import CommentIcon from '@/assets/icons/comment.svg';
 import HeartIcon from '@/assets/icons/mdi_heart.svg';
 import MoreHorizontalIcon from '@/assets/icons/more-horizontal.svg';
+import Checkbox from '@/shared/ui/checkbox';
+import LockIcon from '@/assets/icons/lock.svg';
 import { MoreOptionsMenu } from '@/shared/ui/more-options-menu';
 import ProfileIcon from '@/assets/icons/profile.svg';
 import ReplyIcon from '@/assets/icons/reply.svg';
@@ -19,6 +21,7 @@ import { SiteHeader } from '@/shared/ui/site-header';
 import formatDateTime from '@/shared/lib/formatDateTime';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 import { useShampooRoomDetail } from '../model/use-shampoo-room-detail';
 
 type ShampooRoomDetailProps = {
@@ -29,6 +32,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const { back, push, replace } = useRouterWithUser();
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
+  const isSharedView = searchParams.get(SEARCH_PARAMS.VIEW) === 'shared';
   const {
     detail,
     isLoading,
@@ -45,6 +49,8 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     commentInput,
     isCommentComposing,
     isCommentInputLocked,
+    isSecretComment,
+    setIsSecretComment,
     handleCommentInputChange,
     handleCommentCompositionStart,
     handleCommentCompositionEnd,
@@ -54,27 +60,79 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     editTarget,
     setEditTarget,
     handleCommentSubmit,
-  } = useShampooRoomDetail(postId);
+  } = useShampooRoomDetail(postId, { isSharedView });
 
   const handleShare = async () => {
-    const shareUrl = window.location.href;
+    const shareUrl = new URL(window.location.origin + window.location.pathname);
+    shareUrl.searchParams.set(SEARCH_PARAMS.VIEW, 'shared');
+    const shareUrlString = shareUrl.toString();
 
     if (navigator.share) {
-      await navigator.share({ url: shareUrl, title: detail?.title ?? '샴푸실 게시글' });
+      await navigator.share({ url: shareUrlString, title: detail?.title ?? '샴푸실 게시글' });
       return;
     }
 
-    await navigator.clipboard.writeText(shareUrl);
+    await navigator.clipboard.writeText(shareUrlString);
     alert('링크가 복사되었습니다.');
+  };
+
+  const getDisplayName = (name: string) => {
+    if (!isSharedView) {
+      return name;
+    }
+
+    return name === '글쓴이' ? '익명' : name;
   };
 
   const startEditComment = (comment: ShampooRoomComment | ShampooRoomCommentReply) => {
     setEditTarget({ id: comment.id, content: comment.content });
     setCommentInput(comment.content);
+    setIsSecretComment(comment.isSecret);
     setReplyTargetCommentId(null);
   };
 
-  const renderReply = (reply: ShampooRoomCommentReply) => (
+  const getVisibleCommentContent = (comment: ShampooRoomComment) => {
+    const canViewSecret = !!detail?.isMine || comment.isMine;
+
+    if (comment.isSecret && !canViewSecret) {
+      return '비밀댓글입니다.';
+    }
+
+    return comment.content;
+  };
+
+  const getVisibleReplyContent = (
+    reply: ShampooRoomCommentReply,
+    parentComment: ShampooRoomComment,
+  ) => {
+    const canViewSecret = !!detail?.isMine || parentComment.isMine || reply.isMine;
+
+    if (reply.isSecret && !canViewSecret) {
+      return '비밀댓글입니다.';
+    }
+
+    return reply.content;
+  };
+
+  const canReplyToComment = (comment: ShampooRoomComment) => {
+    if (!comment.isSecret) return true;
+    return !!detail?.isMine || comment.isMine;
+  };
+
+  useEffect(() => {
+    if (!replyTargetCommentId) return;
+
+    const targetComment = comments.find((comment) => comment.id === replyTargetCommentId);
+    if (!targetComment) return;
+
+    const canReply = !targetComment.isSecret || !!detail?.isMine || targetComment.isMine;
+
+    if (!canReply) {
+      setReplyTargetCommentId(null);
+    }
+  }, [comments, detail?.isMine, replyTargetCommentId, setReplyTargetCommentId]);
+
+  const renderReply = (reply: ShampooRoomCommentReply, parentComment: ShampooRoomComment) => (
     <div key={reply.id} className="flex gap-3 p-5 bg-alternative rounded-6">
       <ReplyIcon className="size-4.5 fill-label-strong shrink-0 mt-1" />
       <div className="flex flex-1 flex-col gap-2">
@@ -84,10 +142,11 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             <p
               className={`typo-body-1-semibold ${reply.isMine ? 'text-negative-light' : 'text-label-default'}`}
             >
-              {getAnonymousDisplayName(reply.user)}
+              {getDisplayName(getAnonymousDisplayName(reply.user))}
             </p>
+            {reply.isSecret && <LockIcon className="size-3.5 fill-label-placeholder" />}
           </div>
-          {reply.isMine && (
+          {!isSharedView && reply.isMine && (
             <MoreOptionsMenu
               trigger={<MoreHorizontalIcon className="size-6" />}
               options={[
@@ -102,8 +161,9 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             />
           )}
         </div>
-        {reply.isSecret && <p className="typo-body-3-medium text-label-info">비밀댓글</p>}
-        <p className="typo-body-1-long-regular text-label-default">{reply.content}</p>
+        <p className="typo-body-1-long-regular text-label-default">
+          {getVisibleReplyContent(reply, parentComment)}
+        </p>
         <p className="typo-body-3-regular text-label-info">
           {formatDateTime(reply.createdAt)}
           {reply.isEdited ? ' · 수정됨' : ''}
@@ -150,7 +210,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
         showBackButton
         onBackClick={handleBackClick}
         rightComponent={
-          detail.isMine ? (
+          !isSharedView && detail.isMine ? (
             <MoreOptionsMenu
               trigger={<MoreHorizontalIcon className="size-6" />}
               options={moreOptions}
@@ -170,7 +230,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                 <p
                   className={`typo-body-1-semibold ${detail.isMine ? 'text-negative-light' : 'text-label-default'}`}
                 >
-                  {getAnonymousDisplayName(detail.user)}
+                  {getDisplayName(getAnonymousDisplayName(detail.user))}
                 </p>
                 <p className="typo-body-3-regular text-label-info">
                   {formatDateTime(detail.createdAt)}
@@ -203,35 +263,37 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
           )}
         </div>
 
-        <div className="px-5 py-3 flex items-center justify-around">
-          <button
-            type="button"
-            onClick={() => likeMutation.mutate()}
-            className={`inline-flex items-center gap-1 typo-body-2-medium ${
-              detail.isLiked ? 'text-negative' : 'text-label-info'
-            }`}
-          >
-            <HeartIcon
-              className={`size-5 ${detail.isLiked ? 'fill-negative-light' : 'fill-label-info'}`}
-            />
-            {detail.likeCount}
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 typo-body-2-medium text-label-info"
-          >
-            <CommentIcon className="size-5 fill-label-info" />
-            {detail.commentCount}
-          </button>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="inline-flex items-center gap-1 typo-body-2-medium text-label-info"
-          >
-            <ShareIcon className="size-5 fill-label-info" />
-            공유
-          </button>
-        </div>
+        {!isSharedView && (
+          <div className="px-5 py-3 flex items-center justify-around">
+            <button
+              type="button"
+              onClick={() => likeMutation.mutate()}
+              className={`inline-flex items-center gap-1 typo-body-2-medium ${
+                detail.isLiked ? 'text-negative' : 'text-label-info'
+              }`}
+            >
+              <HeartIcon
+                className={`size-5 ${detail.isLiked ? 'fill-negative-light' : 'fill-label-info'}`}
+              />
+              {detail.likeCount}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 typo-body-2-medium text-label-info"
+            >
+              <CommentIcon className="size-5 fill-label-info" />
+              {detail.commentCount}
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-1 typo-body-2-medium text-label-info"
+            >
+              <ShareIcon className="size-5 fill-label-info" />
+              공유
+            </button>
+          </div>
+        )}
         <div className="w-full h-1.5 bg-alternative" />
 
         <div>
@@ -250,22 +312,26 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                     <p
                       className={`typo-body-1-semibold ${comment.isMine ? 'text-negative-light' : 'text-label-default'}`}
                     >
-                      {getAnonymousDisplayName(comment.user)}
+                      {getDisplayName(getAnonymousDisplayName(comment.user))}
                     </p>
+                    {comment.isSecret && <LockIcon className="size-3.5 fill-label-placeholder" />}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplyTargetCommentId(comment.id);
-                        setEditTarget(null);
-                        setCommentInput('');
-                      }}
-                      className="typo-body-2-medium text-label-info"
-                    >
-                      답글
-                    </button>
-                    {comment.isMine && (
+                    {!isSharedView && canReplyToComment(comment) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyTargetCommentId(comment.id);
+                          setEditTarget(null);
+                          setIsSecretComment(false);
+                          setCommentInput('');
+                        }}
+                        className="typo-body-2-medium text-label-info"
+                      >
+                        답글
+                      </button>
+                    )}
+                    {!isSharedView && comment.isMine && (
                       <MoreOptionsMenu
                         trigger={<MoreHorizontalIcon className="size-6" />}
                         options={[
@@ -281,18 +347,17 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                     )}
                   </div>
                 </div>
-                {comment.isSecret && (
-                  <p className="mt-2 typo-body-3-medium text-label-info">비밀댓글</p>
-                )}
                 <p className="mt-3 typo-body-1-long-regular text-label-default">
-                  {comment.content}
+                  {getVisibleCommentContent(comment)}
                 </p>
                 <p className="mt-2 typo-body-3-regular text-label-info">
                   {formatDateTime(comment.createdAt)}
                   {comment.isEdited ? ' · 수정됨' : ''}
                 </p>
                 {comment.replies.length > 0 && (
-                  <div className="mt-3 flex flex-col gap-2">{comment.replies.map(renderReply)}</div>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {comment.replies.map((reply) => renderReply(reply, comment))}
+                  </div>
                 )}
               </div>
             ))
@@ -305,50 +370,69 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
         </div>
       </div>
 
-      <div className="border-t border-border-default p-3">
-        {(replyTargetCommentId || editTarget) && (
-          <div className="mb-2 flex items-center justify-between rounded-8 bg-alternative px-3 py-2">
-            <p className="typo-body-3-regular text-label-info">
-              {editTarget ? '댓글 수정 중' : `답글 작성 중 (#${replyTargetCommentId})`}
-            </p>
+      {!isSharedView && (
+        <div className="border-t border-border-default p-3">
+          {(replyTargetCommentId || editTarget) && (
+            <div className="mb-2 flex items-center justify-between rounded-8 bg-alternative px-3 py-2">
+              <p className="typo-body-3-regular text-label-info">
+                {editTarget ? '댓글 수정 중' : `답글 작성 중 (#${replyTargetCommentId})`}
+              </p>
+              <button
+                type="button"
+                className="typo-body-3-medium text-label-default"
+                onClick={() => {
+                  setReplyTargetCommentId(null);
+                  setEditTarget(null);
+                  setIsSecretComment(false);
+                  setCommentInput('');
+                }}
+              >
+                취소
+              </button>
+            </div>
+          )}
+          <div className="mb-2 flex justify-end">
+            <div className="inline-flex items-center gap-2">
+              <Checkbox
+                id="comment-secret-checkbox"
+                shape="square"
+                checked={isSecretComment}
+                onChange={(e) => setIsSecretComment(e.target.checked)}
+              />
+              <label
+                htmlFor="comment-secret-checkbox"
+                className="cursor-pointer typo-body-3-regular text-label-default"
+              >
+                비밀댓글
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              value={commentInput}
+              onChange={(e) => handleCommentInputChange(e.target.value)}
+              onCompositionStart={handleCommentCompositionStart}
+              onCompositionEnd={handleCommentCompositionEnd}
+              placeholder="댓글을 입력하세요"
+              className="flex-1 rounded-6 border border-border-default px-3 py-2 typo-body-2-regular focus:outline-none focus:border-border-default"
+            />
             <button
               type="button"
-              className="typo-body-3-medium text-label-default"
-              onClick={() => {
-                setReplyTargetCommentId(null);
-                setEditTarget(null);
-                setCommentInput('');
-              }}
+              onClick={handleCommentSubmit}
+              disabled={
+                createCommentMutation.isPending ||
+                updateCommentMutation.isPending ||
+                isCommentComposing ||
+                isCommentInputLocked
+              }
+              className="rounded-6 bg-label-default text-white px-4 typo-body-2-medium disabled:opacity-40"
             >
-              취소
+              등록
             </button>
           </div>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            value={commentInput}
-            onChange={(e) => handleCommentInputChange(e.target.value)}
-            onCompositionStart={handleCommentCompositionStart}
-            onCompositionEnd={handleCommentCompositionEnd}
-            placeholder="댓글을 입력하세요"
-            className="flex-1 rounded-6 border border-border-default px-3 py-2 typo-body-2-regular focus:outline-none focus:border-border-default"
-          />
-          <button
-            type="button"
-            onClick={handleCommentSubmit}
-            disabled={
-              createCommentMutation.isPending ||
-              updateCommentMutation.isPending ||
-              isCommentComposing ||
-              isCommentInputLocked
-            }
-            className="rounded-6 bg-label-default text-white px-4 typo-body-2-medium disabled:opacity-40"
-          >
-            등록
-          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

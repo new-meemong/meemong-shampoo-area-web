@@ -12,7 +12,6 @@ import {
   useState,
 } from 'react';
 
-
 import { isDesigner, isModel } from '@/entities/user/lib/user-role';
 import { useWebviewLogin } from '@/features/auth/api/use-webview-login';
 import { SEARCH_PARAMS } from '@/shared/constants/search-params';
@@ -37,6 +36,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const userId = searchParams.get(SEARCH_PARAMS.USER_ID);
+  const isSharedView = searchParams.get(SEARCH_PARAMS.VIEW) === 'shared';
 
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -72,21 +72,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return tokenExpiryMs - Date.now() < refreshThresholdMs;
   }, [tokenExpiryMs, user?.token]);
 
-  const refreshToken = useCallback(async (_reason: string) => {
-    if (!userId) return;
-    if (loginInFlightRef.current) {
-      await loginInFlightRef.current;
-      return;
-    }
-    const now = Date.now();
-    if (now - lastRefreshAtRef.current < 1000) return;
+  const refreshToken = useCallback(
+    async (_reason: string) => {
+      if (!userId) return;
+      if (loginInFlightRef.current) {
+        await loginInFlightRef.current;
+        return;
+      }
+      const now = Date.now();
+      if (now - lastRefreshAtRef.current < 1000) return;
 
-    loginInFlightRef.current = loginAsync({ userId }).finally(() => {
-      loginInFlightRef.current = null;
-      lastRefreshAtRef.current = Date.now();
-    });
-    await loginInFlightRef.current;
-  }, [loginAsync, userId]);
+      loginInFlightRef.current = loginAsync({ userId }).finally(() => {
+        loginInFlightRef.current = null;
+        lastRefreshAtRef.current = Date.now();
+      });
+      await loginInFlightRef.current;
+    },
+    [loginAsync, userId],
+  );
 
   const updateUser = (userData: Partial<UserData>) => {
     setUser((prev) => {
@@ -148,16 +151,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!userId) return;
-    const interval = setInterval(() => {
-      if (shouldRefreshToken) {
-        void refreshToken('interval');
-      }
-    }, 5 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        if (shouldRefreshToken) {
+          void refreshToken('interval');
+        }
+      },
+      5 * 60 * 1000,
+    );
 
     return () => clearInterval(interval);
   }, [refreshToken, shouldRefreshToken, userId]);
 
-  if (userId === null) return <div>유저아이디가 누락되었습니다</div>;
+  if (userId === null) {
+    if (isSharedView) {
+      return <>{children}</>;
+    }
+
+    return <div>유저아이디가 누락되었습니다</div>;
+  }
 
   const isSameUser = user?.id === Number(userId);
 
