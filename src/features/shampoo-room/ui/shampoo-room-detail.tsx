@@ -194,6 +194,14 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     },
   ];
 
+  const hasCommentInput = commentInput.trim().length > 0;
+  const isSubmitDisabled =
+    !hasCommentInput ||
+    createCommentMutation.isPending ||
+    updateCommentMutation.isPending ||
+    isCommentComposing ||
+    isCommentInputLocked;
+
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">
       <SiteHeader
@@ -427,13 +435,10 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
             <button
               type="button"
               onClick={handleCommentSubmit}
-              disabled={
-                createCommentMutation.isPending ||
-                updateCommentMutation.isPending ||
-                isCommentComposing ||
-                isCommentInputLocked
-              }
-              className="rounded-6 bg-label-default text-white px-4 typo-body-2-medium disabled:opacity-40"
+              disabled={isSubmitDisabled}
+              className={`rounded-6 px-4 typo-body-2-medium text-white ${
+                hasCommentInput ? 'bg-label-default' : 'bg-label-placeholder'
+              } disabled:cursor-not-allowed`}
             >
               등록
             </button>
