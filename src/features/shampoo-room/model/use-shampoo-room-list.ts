@@ -51,6 +51,29 @@ export function useShampooRoomList() {
     setFilterTab((prev) => (prev === 'NONE' ? 'REGION' : prev));
   }, [userSelectedRegionData]);
 
+  useEffect(() => {
+    if (source !== 'app') return;
+
+    const refreshList = () => {
+      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      refreshList();
+    };
+
+    window.addEventListener('focus', refreshList);
+    window.addEventListener('pageshow', refreshList);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshList);
+      window.removeEventListener('pageshow', refreshList);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [queryClient, source]);
+
   const addresses = useMemo(() => {
     if (filterTab !== 'REGION') return undefined;
     return convertSelectedRegionToAddresses(userSelectedRegionData);
