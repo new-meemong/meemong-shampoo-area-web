@@ -18,6 +18,7 @@ import ReplyIcon from '@/assets/icons/reply.svg';
 import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import ShareIcon from '@/assets/icons/share.svg';
 import { SiteHeader } from '@/shared/ui/site-header';
+import useShowImageViewerModal from '@/shared/ui/hooks/use-show-image-viewer-modal';
 import formatDateTime from '@/shared/lib/formatDateTime';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useSearchParams } from 'next/navigation';
@@ -30,6 +31,7 @@ type ShampooRoomDetailProps = {
 
 export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const { back, push, replace } = useRouterWithUser();
+  const showImageViewerModal = useShowImageViewerModal();
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
   const isSharedView = searchParams.get(SEARCH_PARAMS.VIEW) === 'shared';
@@ -202,6 +204,8 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     isCommentComposing ||
     isCommentInputLocked;
 
+  const imageUrls = detail.images.map((image) => image.imageUrl);
+
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">
       <SiteHeader
@@ -246,9 +250,16 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
           {detail.images.length > 0 && (
             <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-hide">
               {detail.images.map((image, index) => (
-                <div
+                <button
                   key={`${image.imageUrl}-${index}`}
+                  type="button"
                   className="size-[140px] shrink-0 rounded-6 overflow-hidden border border-border-default"
+                  onClick={() =>
+                    showImageViewerModal({
+                      images: imageUrls,
+                      initialIndex: index,
+                    })
+                  }
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -256,7 +267,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
                     alt="게시글 이미지"
                     className="size-full object-cover"
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
