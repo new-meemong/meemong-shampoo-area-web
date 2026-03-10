@@ -1,10 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-
-import { Button } from '@/shared';
-import { useOverlayContext } from '@/shared/context/overlay-context';
 import {
   DrawerClose,
   DrawerDescription,
@@ -12,11 +7,15 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/shared/ui/drawer';
+import { createShampooRoom, getShampooRoomDetail, updateShampooRoom } from '../api';
+import { useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { Button } from '@/shared';
+import type { ShampooRoomCategory } from '@/entities/shampoo-room';
+import { useOverlayContext } from '@/shared/context/overlay-context';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useUploadShampooRoomImage } from './use-upload-shampoo-room-image';
-
-import { createShampooRoom, getShampooRoomDetail, updateShampooRoom } from '../api';
-import type { ShampooRoomCategory } from '@/entities/shampoo-room';
 
 export type NewImageItem = {
   id: string;
@@ -166,6 +165,7 @@ export function useShampooRoomForm(postId?: string) {
     }
 
     const created = await createMutation.mutateAsync(payload);
+    await queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
     replace(`/posts/${created.id}`);
   };
 

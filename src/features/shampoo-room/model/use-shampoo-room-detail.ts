@@ -99,6 +99,10 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
 
   const deletePostMutation = useMutation({
     mutationFn: () => deleteShampooRoom(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
+      queryClient.removeQueries({ queryKey: ['shampoo-room-detail', postId] });
+    },
   });
 
   const createCommentMutation = useMutation({
