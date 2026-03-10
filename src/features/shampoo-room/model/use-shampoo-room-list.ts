@@ -54,8 +54,20 @@ export function useShampooRoomList() {
   useEffect(() => {
     if (source !== 'app') return;
 
+    let wasBlurred = false;
+
     const refreshList = () => {
       queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
+    };
+
+    const handleBlur = () => {
+      wasBlurred = true;
+    };
+
+    const handleFocus = () => {
+      if (!wasBlurred) return;
+      wasBlurred = false;
+      refreshList();
     };
 
     const handleVisibilityChange = () => {
@@ -63,12 +75,14 @@ export function useShampooRoomList() {
       refreshList();
     };
 
-    window.addEventListener('focus', refreshList);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
     window.addEventListener('pageshow', refreshList);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('focus', refreshList);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
       window.removeEventListener('pageshow', refreshList);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
