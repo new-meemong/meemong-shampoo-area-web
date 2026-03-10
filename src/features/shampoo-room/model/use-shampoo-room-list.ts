@@ -132,7 +132,7 @@ export function useShampooRoomList() {
 
       window.setTimeout(() => {
         // 브리지 호출이 성공으로 반환되어도 실제 전환이 안 된 경우를 대비한 fallback
-        if (document.visibilityState === 'visible' && document.hasFocus()) {
+        if (document.visibilityState === 'visible') {
           push('/posts/create');
         }
       }, 180);

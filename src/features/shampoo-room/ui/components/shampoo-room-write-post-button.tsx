@@ -16,7 +16,7 @@ export default function ShampooRoomWritePostButton({
   return (
     <button
       className={cn(
-        'flex items-center justify-center rounded-full bg-[#222222] hover:bg-[#333333] shadow-heavy disabled:pointer-events-none w-15 h-15',
+        'flex items-center justify-center rounded-full bg-[#222222] active:bg-[#333333] touch-manipulation shadow-heavy disabled:pointer-events-none w-15 h-15',
         className,
       )}
       type="button"
