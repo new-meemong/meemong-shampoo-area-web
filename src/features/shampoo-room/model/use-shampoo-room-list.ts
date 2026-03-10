@@ -4,7 +4,7 @@ import type { ShampooRoomCategory, ShampooRoomListItem } from '@/entities/shampo
 import { createShampooRoomRead, createShampooRoomView, getShampooRooms } from '../api';
 import { normalizeSource, openInAppWebView } from '@/shared/lib/app-bridge';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import useSelectedRegion, {
   convertSelectedRegionToAddresses,
   getSelectedRegionLabel,
@@ -26,6 +26,7 @@ const categoryToApi = (category: CategoryTab): ShampooRoomCategory | undefined =
 
 export function useShampooRoomList() {
   const { push } = useRouterWithUser();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
   const { userSelectedRegionData, setSelectedRegionData } = useSelectedRegion();
@@ -33,7 +34,12 @@ export function useShampooRoomList() {
   const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
   const [filterTab, setFilterTab] = useState<FilterTab>('NONE');
 
-  const { mutateAsync: markView } = useMutation({ mutationFn: createShampooRoomView });
+  const { mutateAsync: markView } = useMutation({
+    mutationFn: createShampooRoomView,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
+    },
+  });
   const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
 
   useEffect(() => {

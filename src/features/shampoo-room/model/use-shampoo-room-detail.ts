@@ -73,7 +73,13 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
 
   const observerTargetIndex = comments.length <= 1 ? 0 : comments.length - 2;
 
-  const { mutateAsync: markView } = useMutation({ mutationFn: createShampooRoomView });
+  const { mutateAsync: markView } = useMutation({
+    mutationFn: createShampooRoomView,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] });
+    },
+  });
   const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
 
   const likeMutation = useMutation({
