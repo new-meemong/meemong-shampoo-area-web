@@ -195,7 +195,14 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
           disabled: deletePostMutation.isPending,
           onClick: () => {
             deletePostMutation.mutate(undefined, {
-              onSuccess: () => replace('/posts'),
+              onSuccess: () => {
+                if (source === 'app') {
+                  const closed = closeAppWebView('close');
+                  if (closed) return;
+                }
+
+                replace('/posts');
+              },
             });
           },
         },
