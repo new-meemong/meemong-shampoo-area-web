@@ -1,8 +1,5 @@
 'use client';
 
-import React from 'react';
-
-import { cn } from '@/shared/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +7,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu';
+
+import React from 'react';
+import { cn } from '@/shared/lib/utils';
 
 export type OptionItem = {
   label: string;
@@ -41,8 +41,7 @@ export const MoreOptionsMenu = ({
         {options.map((option, index) => (
           <div key={option.label}>
             <DropdownMenuItem
-              key={index}
-              onClick={(e) => {
+              onSelect={(e) => {
                 e.stopPropagation();
                 option.onClick();
               }}
