@@ -77,7 +77,6 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
     mutationFn: createShampooRoomView,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
-      queryClient.invalidateQueries({ queryKey: ['shampoo-room-detail', postId] });
     },
   });
   const { mutateAsync: markRead } = useMutation({ mutationFn: createShampooRoomRead });
@@ -99,6 +98,9 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
 
   const deletePostMutation = useMutation({
     mutationFn: () => deleteShampooRoom(postId),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['shampoo-room-detail', postId] });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shampoo-rooms'] });
       queryClient.removeQueries({ queryKey: ['shampoo-room-detail', postId] });
