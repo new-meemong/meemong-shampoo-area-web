@@ -19,6 +19,7 @@ import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import ShareIcon from '@/assets/icons/share.svg';
 import { SiteHeader } from '@/shared/ui/site-header';
 import useShowImageViewerModal from '@/shared/ui/hooks/use-show-image-viewer-modal';
+import useShowModal from '@/shared/ui/hooks/use-show-modal';
 import formatDateTime from '@/shared/lib/formatDateTime';
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useSearchParams } from 'next/navigation';
@@ -32,6 +33,7 @@ type ShampooRoomDetailProps = {
 export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const { back, push, replace } = useRouterWithUser();
   const showImageViewerModal = useShowImageViewerModal();
+  const showModal = useShowModal();
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
   const isSharedView = searchParams.get(SEARCH_PARAMS.VIEW) === 'shared';
@@ -181,17 +183,31 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
     push(`/posts/edit/${detail.id}`);
   };
 
+  const handleDeletePostClick = () => {
+    showModal({
+      id: `shampoo-room-delete-modal-${detail.id}`,
+      text: '게시글을 삭제할까요?',
+      buttons: [
+        { label: '취소' },
+        {
+          label: '삭제하기',
+          textColor: 'text-negative',
+          disabled: deletePostMutation.isPending,
+          onClick: () => {
+            deletePostMutation.mutate(undefined, {
+              onSuccess: () => replace('/posts'),
+            });
+          },
+        },
+      ],
+    });
+  };
+
   const moreOptions = [
     { label: '수정하기', onClick: handleEditPostClick },
     {
       label: '삭제하기',
-      onClick: () => {
-        if (confirm('게시글을 삭제할까요?')) {
-          deletePostMutation.mutate(undefined, {
-            onSuccess: () => replace('/posts'),
-          });
-        }
-      },
+      onClick: handleDeletePostClick,
       className: 'text-negative',
     },
   ];
