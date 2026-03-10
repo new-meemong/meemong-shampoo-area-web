@@ -123,10 +123,20 @@ export function useShampooRoomList() {
 
   const handleWritePostClick = useCallback(() => {
     if (source === 'app') {
+      const webPath = '/posts/create';
       const opened = openInAppWebView('/shampoo-area/posts/create');
-      if (opened) {
+      if (!opened) {
+        push(webPath);
         return;
       }
+
+      window.setTimeout(() => {
+        // 브리지 호출이 성공으로 반환되어도 실제 전환이 안 된 경우를 대비한 fallback
+        if (document.visibilityState === 'visible' && document.hasFocus()) {
+          push('/posts/create');
+        }
+      }, 180);
+      return;
     }
 
     push('/posts/create');
@@ -169,10 +179,19 @@ export function useShampooRoomList() {
       markRead(post.id.toString()).catch(() => {});
 
       if (source === 'app') {
+        const webPath = `/posts/${post.id}`;
         const opened = openInAppWebView(`/shampoo-area/posts/${post.id}`);
-        if (opened) {
+        if (!opened) {
+          push(webPath);
           return;
         }
+
+        window.setTimeout(() => {
+          if (document.visibilityState === 'visible' && document.hasFocus()) {
+            push(webPath);
+          }
+        }, 180);
+        return;
       }
 
       push(`/posts/${post.id}`);
