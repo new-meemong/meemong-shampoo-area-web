@@ -16,6 +16,7 @@ export type ShampooRoomListItem = {
   title: string;
   category: ShampooRoomCategory;
   content: string;
+  address?: string;
   images: ShampooRoomImage[];
   viewCount: number;
   likeCount: number;
