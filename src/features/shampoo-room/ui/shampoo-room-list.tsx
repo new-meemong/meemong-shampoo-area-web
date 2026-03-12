@@ -39,7 +39,13 @@ const FILTER_TABS: Array<{
   { label: '지역', value: 'REGION', icon: LocationIcon },
 ];
 
-const getPostAddress = (post: ShampooRoomListItem) => post.address ?? post.user.address ?? '';
+const getPostAddress = (post: ShampooRoomListItem) => {
+  const listAddress = post.address?.trim();
+  if (listAddress) return listAddress;
+
+  const userAddress = post.user.address?.trim();
+  return userAddress ?? '';
+};
 
 export default function ShampooRoomList() {
   const {

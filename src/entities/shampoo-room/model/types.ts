@@ -7,8 +7,8 @@ export type ShampooRoomImage = {
 export type ShampooRoomUser = {
   name: string;
   anonymousNumber: number;
-  address?: string;
-  address2?: string;
+  address?: string | null;
+  address2?: string | null;
 };
 
 export type ShampooRoomListItem = {
@@ -16,7 +16,7 @@ export type ShampooRoomListItem = {
   title: string;
   category: ShampooRoomCategory;
   content: string;
-  address?: string;
+  address?: string | null;
   images: ShampooRoomImage[];
   viewCount: number;
   likeCount: number;
