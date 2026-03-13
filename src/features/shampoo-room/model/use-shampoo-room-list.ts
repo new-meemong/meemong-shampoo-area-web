@@ -118,15 +118,9 @@ export function useShampooRoomList() {
       const opened = openInAppWebView('/shampoo-area/posts/create');
       if (!opened) {
         push(webPath);
-        return;
       }
-
-      window.setTimeout(() => {
-        // 브리지 호출이 성공으로 반환되어도 실제 전환이 안 된 경우를 대비한 fallback
-        if (document.visibilityState === 'visible') {
-          push('/posts/create');
-        }
-      }, 180);
+      // 브리지 전환 성공 시 현재(리스트) 웹뷰 라우팅을 막아 상세/작성 화면이
+      // 배경 웹뷰에 중복으로 쌓이는 현상을 방지한다.
       return;
     }
 
@@ -174,14 +168,9 @@ export function useShampooRoomList() {
         const opened = openInAppWebView(`/shampoo-area/posts/${post.id}`);
         if (!opened) {
           push(webPath);
-          return;
         }
-
-        window.setTimeout(() => {
-          if (document.visibilityState === 'visible' && document.hasFocus()) {
-            push(webPath);
-          }
-        }, 180);
+        // 브리지 전환 성공 시 현재(리스트) 웹뷰 라우팅을 막아
+        // 전체화면 상세 닫은 뒤 리스트가 아닌 상세로 남는 문제를 방지한다.
         return;
       }
 
