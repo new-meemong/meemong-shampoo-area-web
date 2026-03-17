@@ -1,8 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { apiClient } from '@/shared/api/client';
+import { resizeImageFile } from '@/shared/lib/resize-image-file';
 
 const STORAGE_HOST = 'https://job-storage.meemong.com';
+const UPLOAD_IMAGE_MAX_SIZE = 1024;
 
 type UploadedImage = {
   id: number;
@@ -28,10 +30,11 @@ type PresignedUploadResponse = {
 };
 
 const uploadSingleImage = async (file: File): Promise<UploadedImage> => {
+  const resizedFile = await resizeImageFile(file, UPLOAD_IMAGE_MAX_SIZE);
   const presignedResponse = await apiClient.get<PresignedUploadResponse['data']>(
     'uploads/images/presigned-url',
     {
-      searchParams: { filename: file.name },
+      searchParams: { filename: resizedFile.name },
     },
   );
 
@@ -41,7 +44,7 @@ const uploadSingleImage = async (file: File): Promise<UploadedImage> => {
   Object.entries(uploadData.fields).forEach(([key, value]) => {
     formData.append(key, value);
   });
-  formData.append('file', file);
+  formData.append('file', resizedFile);
 
   const uploadResponse = await fetch(uploadData.url, {
     method: requestMethod,
