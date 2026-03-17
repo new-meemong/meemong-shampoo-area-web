@@ -20,8 +20,8 @@ import {
 } from '../model/use-shampoo-room-list';
 
 const CATEGORY_TABS: Array<{ label: string; value: CategoryTab }> = [
+  { label: '전체', value: 'ALL' },
   { label: '자유글', value: 'FREE' },
-  { label: '인기글', value: 'POPULAR' },
   { label: '교육', value: 'EDUCATION' },
   { label: '제품', value: 'PRODUCT' },
   { label: '사고팔고', value: 'MARKET' },

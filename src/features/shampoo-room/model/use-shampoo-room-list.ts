@@ -16,11 +16,11 @@ import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observe
 import { useRouterWithUser } from '@/shared/hooks/use-router-with-user';
 import { useSearchParams } from 'next/navigation';
 
-export type CategoryTab = 'FREE' | 'POPULAR' | 'EDUCATION' | 'PRODUCT' | 'MARKET';
+export type CategoryTab = 'ALL' | 'FREE' | 'POPULAR' | 'EDUCATION' | 'PRODUCT' | 'MARKET';
 export type FilterTab = 'NONE' | 'MINE' | 'COMMENTED' | 'LIKED' | 'REGION';
 
 const categoryToApi = (category: CategoryTab): ShampooRoomCategory | undefined => {
-  if (category === 'POPULAR') return undefined;
+  if (category === 'ALL' || category === 'POPULAR') return undefined;
   return category;
 };
 
@@ -31,7 +31,7 @@ export function useShampooRoomList() {
   const source = normalizeSource(searchParams.get(SEARCH_PARAMS.SOURCE));
   const { userSelectedRegionData, setSelectedRegionData } = useSelectedRegion();
 
-  const [categoryTab, setCategoryTab] = useState<CategoryTab>('FREE');
+  const [categoryTab, setCategoryTab] = useState<CategoryTab>('ALL');
   const [filterTab, setFilterTab] = useState<FilterTab>('NONE');
 
   const { mutateAsync: markView } = useMutation({
