@@ -141,6 +141,7 @@ export default function ShampooRoomList() {
                   post={post}
                   formattedDate={formatDateTime(post.createdAt)}
                   formattedAddress={getPostAddress(post) ? formatAddress(getPostAddress(post)) : ''}
+                  showCategoryLabel={categoryTab === 'ALL'}
                   onClick={() => handlePostClick(post)}
                 />
               </div>

@@ -24,6 +24,7 @@
   --color-dimmer: rgba(38, 37, 36, 70%);
 
   /* Status */
+  --color-primary-deep: #ff6b00;
   --color-positive: #2cb36d;
   --color-cautionary: #ff9142;
   --color-negative: #ff3300;
