@@ -18,6 +18,7 @@ import ReplyIcon from '@/assets/icons/reply.svg';
 import { SEARCH_PARAMS } from '@/shared/constants/search-params';
 import ShareIcon from '@/assets/icons/share.svg';
 import { SiteHeader } from '@/shared/ui/site-header';
+import { StoreFloatingButton } from '@/shared/ui/store-floating-button';
 import useShowImageViewerModal from '@/shared/ui/hooks/use-show-image-viewer-modal';
 import useShowModal from '@/shared/ui/hooks/use-show-modal';
 import formatDateTime from '@/shared/lib/formatDateTime';
@@ -30,6 +31,9 @@ type ShampooRoomDetailProps = {
   postId: string;
 };
 
+const SHAMPOO_ROOM_DETAIL_PAGE_CLASS_NAME =
+  'min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col';
+
 export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const { back, push, replace } = useRouterWithUser();
   const showImageViewerModal = useShowImageViewerModal();
@@ -40,6 +44,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const {
     detail,
     isLoading,
+    isError,
     comments,
     hasNextPage,
     isFetchingNextPage,
@@ -168,7 +173,14 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   );
 
   if (isLoading || !detail) {
-    return <div className="p-5 typo-body-2-regular text-label-info">불러오는 중...</div>;
+    return (
+      <div className={SHAMPOO_ROOM_DETAIL_PAGE_CLASS_NAME}>
+        <div className="flex-1 p-5 typo-body-2-regular text-label-info">
+          {isError ? '게시글을 불러오지 못했습니다.' : '불러오는 중...'}
+        </div>
+        {isSharedView && <StoreFloatingButton />}
+      </div>
+    );
   }
 
   const handleBackClick = () => {
@@ -230,7 +242,7 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
   const imageUrls = detail.images.map((image) => image.imageUrl);
 
   return (
-    <div className="min-w-[375px] w-full h-screen mx-auto bg-white flex flex-col">
+    <div className={SHAMPOO_ROOM_DETAIL_PAGE_CLASS_NAME}>
       <SiteHeader
         title="샴푸실"
         showBackButton
@@ -416,6 +428,8 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
               불러오는 중...
             </div>
           )}
+          {/* 공유 뷰에서는 하단 고정 스토어 버튼에 마지막 댓글이 가려지지 않도록 여백 확보 */}
+          {isSharedView && <div className="h-[calc(140px+env(safe-area-inset-bottom))]" />}
         </div>
       </div>
 
@@ -479,6 +493,8 @@ export default function ShampooRoomDetail({ postId }: ShampooRoomDetailProps) {
           </div>
         </div>
       )}
+
+      {isSharedView && <StoreFloatingButton />}
     </div>
   );
 }

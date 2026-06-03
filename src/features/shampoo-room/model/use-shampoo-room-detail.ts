@@ -15,7 +15,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getToken } from '@/shared/lib/auth';
 import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer';
 
 const viewedPostIds = new Set<string>();
@@ -23,7 +22,6 @@ const readPostIds = new Set<string>();
 
 export function useShampooRoomDetail(postId: string, options?: { isSharedView?: boolean }) {
   const isSharedView = options?.isSharedView ?? false;
-  const hasAuthToken = !!getToken();
   const queryClient = useQueryClient();
 
   const [commentInput, setCommentInput] = useState('');
@@ -33,7 +31,7 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
   const [editTarget, setEditTarget] = useState<{ id: number; content: string } | null>(null);
   const [isSecretComment, setIsSecretComment] = useState(false);
 
-  const { data: detail, isLoading } = useQuery({
+  const { data: detail, isLoading, isError } = useQuery({
     queryKey: ['shampoo-room-detail', postId],
     queryFn: () => getShampooRoomDetail(postId),
   });
@@ -52,7 +50,6 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
       }),
     getNextPageParam: (lastPage) => lastPage.__nextCursor,
     initialPageParam: undefined as string | undefined,
-    enabled: !isSharedView || hasAuthToken,
   });
 
   const comments = useMemo(
@@ -228,6 +225,7 @@ export function useShampooRoomDetail(postId: string, options?: { isSharedView?: 
   return {
     detail,
     isLoading,
+    isError,
     comments,
     hasNextPage,
     fetchNextPage,
