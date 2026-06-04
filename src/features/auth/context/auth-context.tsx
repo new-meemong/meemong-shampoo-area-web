@@ -23,6 +23,7 @@ import {
   updateUserData,
   type UserData,
 } from '@/shared/lib/auth';
+import { clearDatadogUser, syncDatadogUser } from '@/shared/lib/datadog';
 
 type AuthContextType = {
   user: UserData;
@@ -100,6 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const isSameUser = userId !== null && user?.id === Number(userId);
+  const authenticatedUser = user && isInitialized && isSameUser ? user : null;
+
   useEffect(() => {
     if (!userId) {
       return;
@@ -109,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lastUserIdRef.current = userId;
       setIsInitialized(false);
     }
-    const isSameUser = user?.id === Number(userId);
     if (!isSameUser) {
       void refreshToken('user-change');
       return;
@@ -118,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isInitialized) {
       setIsInitialized(true);
     }
-  }, [isInitialized, refreshToken, userId, user?.id]);
+  }, [isInitialized, isSameUser, refreshToken, userId]);
 
   useEffect(() => {
     if (!userId || !user?.token) return;
@@ -163,6 +166,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [refreshToken, shouldRefreshToken, userId]);
 
+  useEffect(() => {
+    if (!authenticatedUser) {
+      clearDatadogUser();
+      return;
+    }
+
+    syncDatadogUser(authenticatedUser);
+  }, [authenticatedUser]);
+
   if (userId === null) {
     if (isSharedView) {
       return <>{children}</>;
@@ -171,17 +183,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return <div>유저아이디가 누락되었습니다</div>;
   }
 
-  const isSameUser = user?.id === Number(userId);
-
-  if (!user || !isInitialized || !isSameUser) {
+  if (!authenticatedUser) {
     return isError ? <div>로그인 실패</div> : null;
   }
 
-  const isUserModel = isModel(user);
-  const isUserDesigner = isDesigner(user);
+  const isUserModel = isModel(authenticatedUser);
+  const isUserDesigner = isDesigner(authenticatedUser);
 
   return (
-    <AuthContext.Provider value={{ user, isUserModel, isUserDesigner, updateUser }}>
+    <AuthContext.Provider
+      value={{ user: authenticatedUser, isUserModel, isUserDesigner, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

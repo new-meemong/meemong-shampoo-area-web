@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 
+import { DatadogAppRouter } from '@datadog/browser-rum-nextjs';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import Script from 'next/script';
@@ -43,6 +44,7 @@ export default function RootLayout({
         className={`${pretendard.variable} antialiased max-w-2xl mx-auto`}
         style={{ backgroundColor: '#ffffff' }}
       >
+        <DatadogAppRouter />
         <OverlayProvider>
           <QueryProvider>
             <ErrorBoundary>
