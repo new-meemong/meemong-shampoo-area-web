@@ -15,6 +15,7 @@ import {
 import { isDesigner, isModel } from '@/entities/user/lib/user-role';
 import { useWebviewLogin } from '@/features/auth/api/use-webview-login';
 import { SEARCH_PARAMS } from '@/shared/constants/search-params';
+import { syncAnalyticsAuthenticatedUser } from '@/shared/lib/analytics/identity';
 import {
   decodeJWTPayload,
   getCurrentUser,
@@ -173,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     syncDatadogUser(authenticatedUser);
+    void syncAnalyticsAuthenticatedUser(authenticatedUser);
   }, [authenticatedUser]);
 
   if (userId === null) {

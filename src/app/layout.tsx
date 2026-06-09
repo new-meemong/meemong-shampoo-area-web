@@ -10,6 +10,7 @@ import { AuthProvider } from '@/features/auth/context/auth-context';
 import { LoadingProvider } from '@/shared/context/loading-context';
 import { OverlayProvider } from '@/shared/context/overlay-context';
 import { ErrorBoundary } from '@/shared/error-boundary';
+import { AnalyticsProvider } from '@/shared/lib/analytics/analytics-provider';
 import { QueryProvider } from '@/shared/ui/providers/query-provider';
 
 const pretendard = localFont({
@@ -49,9 +50,11 @@ export default function RootLayout({
           <QueryProvider>
             <ErrorBoundary>
               <Suspense fallback={<div />}>
-                <AuthProvider>
-                  <LoadingProvider>{children}</LoadingProvider>
-                </AuthProvider>
+                <AnalyticsProvider>
+                  <AuthProvider>
+                    <LoadingProvider>{children}</LoadingProvider>
+                  </AuthProvider>
+                </AnalyticsProvider>
               </Suspense>
             </ErrorBoundary>
           </QueryProvider>
