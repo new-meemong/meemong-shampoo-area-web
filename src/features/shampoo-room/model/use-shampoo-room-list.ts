@@ -127,6 +127,18 @@ export function useShampooRoomList() {
     push('/posts/create');
   }, [push, source]);
 
+  const handleVideoAdPlayClick = useCallback(() => {
+    if (source === 'app') {
+      const opened = openInAppWebView('/shampoo-area/posts/video-ad');
+      if (!opened) {
+        push(ROUTES.POSTS_VIDEO_AD);
+      }
+      return;
+    }
+
+    push(ROUTES.POSTS_VIDEO_AD);
+  }, [push, source]);
+
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['shampoo-rooms', categoryTab, filterTab, addresses?.join(',')],
     queryFn: ({ pageParam }) =>
@@ -196,6 +208,7 @@ export function useShampooRoomList() {
     observerRef,
     observerTargetIndex,
     handlePostClick,
+    handleVideoAdPlayClick,
     handleWritePostClick,
     push,
   };

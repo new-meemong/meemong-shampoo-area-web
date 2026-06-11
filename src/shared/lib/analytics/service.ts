@@ -117,6 +117,30 @@ class WebAnalyticsService {
     ]);
   }
 
+  async track(eventName: string, properties: AnalyticsProperties = {}): Promise<void> {
+    await this.init();
+
+    const mergedProperties = sanitizeAnalyticsProperties({
+      ...this.superProperties,
+      ...properties,
+    });
+
+    await Promise.allSettled([
+      this.runSafely(() => {
+        amplitude.track(eventName, mergedProperties);
+      }),
+      this.runSafely(() => {
+        mixpanel.track(eventName, mergedProperties);
+      }),
+      this.runSafely(async () => {
+        const analytics = await getFirebaseAnalytics();
+        if (!analytics) return;
+
+        logEvent(analytics, eventName, mergedProperties);
+      }),
+    ]);
+  }
+
   async setUserProperties(traits: AnalyticsUserTraits): Promise<void> {
     const userId = this.identifiedUserId;
 

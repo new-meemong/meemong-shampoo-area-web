@@ -3,6 +3,7 @@ export { default as ShampooRoomList } from './ui/shampoo-room-list';
 export { default as ShampooRoomDetail } from './ui/shampoo-room-detail';
 export { default as ShampooRoomForm } from './ui/shampoo-room-form';
 export { default as ShampooRoomSelectRegion } from './ui/shampoo-room-select-region';
+export { default as ShampooRoomVideoAdFull } from './ui/shampoo-room-video-ad-full';
 
 // Model (Hooks)
 export {

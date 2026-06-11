@@ -12,6 +12,7 @@ import formatAddress from '@/shared/lib/format-address';
 import formatDateTime from '@/shared/lib/formatDateTime';
 import { ShampooRoomCard, type ShampooRoomListItem } from '@/entities/shampoo-room';
 import ShampooRoomWritePostButton from './components/shampoo-room-write-post-button';
+import ShampooRoomVideoAdBanner from './components/shampoo-room-video-ad-banner';
 
 import {
   useShampooRoomList,
@@ -63,8 +64,11 @@ export default function ShampooRoomList() {
     observerRef,
     observerTargetIndex,
     handlePostClick,
+    handleVideoAdPlayClick,
     handleWritePostClick,
   } = useShampooRoomList();
+  const shouldShowVideoAd = categoryTab === 'ALL' && filterTab === 'NONE';
+  const videoAdInsertIndex = posts.length > 0 ? Math.min(1, posts.length - 1) : -1;
 
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto flex flex-col bg-white">
@@ -144,6 +148,9 @@ export default function ShampooRoomList() {
                   showCategoryLabel={categoryTab === 'ALL'}
                   onClick={() => handlePostClick(post)}
                 />
+                {shouldShowVideoAd && index === videoAdInsertIndex && (
+                  <ShampooRoomVideoAdBanner onPlayClick={handleVideoAdPlayClick} />
+                )}
               </div>
             ))}
             {isFetchingNextPage && (

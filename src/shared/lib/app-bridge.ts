@@ -16,6 +16,12 @@ function hasCloseWebViewBridge(): boolean {
   return !!window.GoBack && typeof window.GoBack.postMessage === 'function';
 }
 
+function hasExternalLinkBridge(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  return !!window.ExternalLink && typeof window.ExternalLink.postMessage === 'function';
+}
+
 export function openInAppWebView(path: string): boolean {
   if (!hasGoAppRouterBridge()) return false;
 
@@ -32,6 +38,17 @@ export function closeAppWebView(message: string = 'close'): boolean {
 
   try {
     window.GoBack?.postMessage(JSON.stringify(message));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+export function openExternalLinkInApp(url: string): boolean {
+  if (!hasExternalLinkBridge()) return false;
+
+  try {
+    window.ExternalLink?.postMessage(JSON.stringify(url));
     return true;
   } catch (_) {
     return false;

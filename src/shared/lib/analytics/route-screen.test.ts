@@ -27,4 +27,11 @@ describe('resolveAnalyticsScreen', () => {
       screenPathTemplate: '/posts/create',
     });
   });
+
+  test('maps video ad detail before the dynamic post detail route', () => {
+    expect(resolveAnalyticsScreen('/posts/video-ad')).toEqual({
+      screenName: 'shampoo_area_video_ad_detail',
+      screenPathTemplate: '/posts/video-ad',
+    });
+  });
 });

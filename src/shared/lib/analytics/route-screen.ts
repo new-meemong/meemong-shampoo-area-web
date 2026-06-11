@@ -23,6 +23,11 @@ const routeMatchers: RouteMatcher[] = [
     screenPathTemplate: '/posts/create',
   },
   {
+    pattern: /^\/posts\/video-ad$/,
+    screenName: 'shampoo_area_video_ad_detail',
+    screenPathTemplate: '/posts/video-ad',
+  },
+  {
     pattern: /^\/posts\/edit\/[^/]+$/,
     screenName: 'shampoo_area_post_edit',
     screenPathTemplate: '/posts/edit/:id',

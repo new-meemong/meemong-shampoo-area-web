@@ -26,6 +26,7 @@
 
 - Firebase/GA4: `screen_view`
 - Amplitude/Mixpanel: `screen_viewed`
+- Firebase/Amplitude/Mixpanel: `shampoo_area_video_ad_more_click`
 
 화면 이동은 개별 이벤트 이름을 만들지 않고 `screen_name`, `screen_path_template`, `page_path` 속성으로 구분한다. 동적 ID와 쿼리 값은 원문 URL로 보내지 않고 라우트 템플릿으로 정규화한다.
 
@@ -49,3 +50,15 @@
 - 원문 URL, query string, post id 같은 동적 값은 이벤트 속성으로 직접 보내지 않는다.
 - GA4 Enhanced Measurement의 browser history pageview 설정이 켜져 있으면 콘솔에서 별도 pageview가 발생할 수 있으므로 DebugView로 중복 여부를 확인한다.
 - 배포 후 Firebase DebugView, Amplitude Live Events, Mixpanel Events에서 `app_surface=shampoo_area_web`과 `screen_viewed` 수신을 확인한다.
+
+## Video Ad
+
+샴푸실 리스트의 하드코딩 영상 광고는 `/posts/video-ad` 진입 시 기존 화면 이벤트로 상세 화면 조회를 기록한다.
+
+`더 보러가기` 버튼 클릭은 `shampoo_area_video_ad_more_click`으로 기록한다.
+
+속성:
+
+- `video_ad_id`: `shampoo-room-youtube-video-ad`
+- `placement`: `shampoo_room_video_ad_detail`
+- `destination_type`: `external_link`
