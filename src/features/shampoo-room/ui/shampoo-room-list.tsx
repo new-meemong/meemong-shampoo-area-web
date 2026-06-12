@@ -40,6 +40,8 @@ const FILTER_TABS: Array<{
   { label: '지역', value: 'REGION', icon: LocationIcon },
 ];
 
+const VIDEO_AD_INSERT_AFTER_POST_COUNT = 3;
+
 const getPostAddress = (post: ShampooRoomListItem) => {
   const listAddress = post.address?.trim();
   if (listAddress) return listAddress;
@@ -68,7 +70,8 @@ export default function ShampooRoomList() {
     handleWritePostClick,
   } = useShampooRoomList();
   const shouldShowVideoAd = categoryTab === 'ALL' && filterTab === 'NONE';
-  const videoAdInsertIndex = posts.length > 0 ? Math.min(1, posts.length - 1) : -1;
+  const videoAdInsertIndex =
+    posts.length > 0 ? Math.min(VIDEO_AD_INSERT_AFTER_POST_COUNT - 1, posts.length - 1) : -1;
 
   return (
     <div className="min-w-[375px] w-full h-screen mx-auto flex flex-col bg-white">
