@@ -133,7 +133,7 @@ export default function ShampooRoomForm({ postId }: ShampooRoomFormProps) {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="내용을 자유롭게 작성해주세요.\n커뮤니티 글은 미용인에게만 노출됩니다"
+            placeholder={'내용을 자유롭게 작성해주세요.\n커뮤니티 글은 미용인에게만 노출됩니다.'}
             className="w-full flex-1 min-h-0 resize-none rounded-6 border border-border-default bg-white px-3 py-2 typo-body-2-long-regular text-label-default placeholder:typo-body-2-long-regular placeholder:text-label-placeholder focus:outline-none focus:border-border-default focus:bg-white"
             maxLength={5000}
           />
