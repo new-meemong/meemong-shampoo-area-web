@@ -13,6 +13,7 @@ import formatDateTime from '@/shared/lib/formatDateTime';
 import { ShampooRoomCard, type ShampooRoomListItem } from '@/entities/shampoo-room';
 import ShampooRoomWritePostButton from './components/shampoo-room-write-post-button';
 import ShampooRoomVideoAdBanner from './components/shampoo-room-video-ad-banner';
+import ShampooRoomVisibilityNotice from './components/shampoo-room-visibility-notice';
 
 import {
   useShampooRoomList,
@@ -133,6 +134,8 @@ export default function ShampooRoomList() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        <ShampooRoomVisibilityNotice />
+
         {isLoading ? (
           <div className="p-5 typo-body-2-regular text-label-info">불러오는 중...</div>
         ) : posts.length === 0 ? (

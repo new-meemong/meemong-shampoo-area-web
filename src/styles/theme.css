@@ -11,9 +11,15 @@
   --color-label-placeholder: #cececc;
   --color-label-disable: #e1e2e4;
 
+  /* Text */
+  --color-text-secondary: #525a66;
+
   /* Background */
   --color-alternative: #f4f4f4;
   --color-focused: #fff9f4;
+
+  /* Fill */
+  --color-fill-weak: #f8f9fb;
 
   /* Border */
   --color-border-default: #e5e5e5;
