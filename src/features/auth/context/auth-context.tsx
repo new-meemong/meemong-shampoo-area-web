@@ -24,7 +24,6 @@ import {
   updateUserData,
   type UserData,
 } from '@/shared/lib/auth';
-import { clearDatadogUser, syncDatadogUser } from '@/shared/lib/datadog';
 
 type AuthContextType = {
   user: UserData;
@@ -168,12 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshToken, shouldRefreshToken, userId]);
 
   useEffect(() => {
-    if (!authenticatedUser) {
-      clearDatadogUser();
-      return;
-    }
-
-    syncDatadogUser(authenticatedUser);
+    if (!authenticatedUser) return;
     void syncAnalyticsAuthenticatedUser(authenticatedUser);
   }, [authenticatedUser]);
 
